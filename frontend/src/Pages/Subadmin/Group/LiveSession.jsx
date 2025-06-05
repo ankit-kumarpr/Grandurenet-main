@@ -83,7 +83,7 @@ const LiveSession = () => {
   const userEmail = sessionStorage.getItem('userEmail');
 
   useEffect(() => {
-    const newSocket = io('http://localhost:4000', {
+    const newSocket = io('https://grandurenet-main.onrender.com', {
       auth: {
         token: accessToken
       }
@@ -94,7 +94,7 @@ const LiveSession = () => {
     const fetchInitialData = async () => {
       try {
         // Fetch group info
-        const groupRes = await axios.get(`http://localhost:4000/api/group/${groupId}`, {
+        const groupRes = await axios.get(`https://grandurenet-main.onrender.com/api/group/${groupId}`, {
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -102,7 +102,7 @@ const LiveSession = () => {
         setGroupInfo(groupRes.data.group);
 
         // Fetch chat history
-        const chatRes = await axios.get(`http://localhost:4000/api/user/chat-history/${groupId}`, {
+        const chatRes = await axios.get(`https://grandurenet-main.onrender.com/api/user/chat-history/${groupId}`, {
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
