@@ -41,7 +41,7 @@ const AllgroupList = () => {
   const GroupListAPI = async () => {
     try {
       setLoading(true);
-      const url = `http://localhost:4000/api/user/grouplist`;
+      const url = `https://grandurenet-main.onrender.com/api/user/grouplist`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
