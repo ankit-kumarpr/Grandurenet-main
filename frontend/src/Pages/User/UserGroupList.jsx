@@ -20,7 +20,13 @@ import {
   Button,
   IconButton,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Modal,
+  TextField,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import {
   Group,
@@ -31,15 +37,25 @@ import {
   Person,
   ArrowForward,
   VideoCall,
-  Schedule
+  Schedule,
+  Feedback
 } from '@mui/icons-material';
 import PageTitle from '../../components/PageTitle';
+import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 const UserGroupList = () => {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackType, setFeedbackType] = useState('');
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const accessToken = sessionStorage.getItem('accessToken');
+   const decodedToken = jwtDecode(accessToken);
+  const userId = decodedToken.id;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,7 +65,7 @@ const UserGroupList = () => {
   const GetGroupsapi = async () => {
     try {
       setLoading(true);
-      const url = `https://grandurenet-main.onrender.com/api/user/getusergroup`;
+      const url = `http://localhost:4000/api/user/getusergroup`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -73,11 +89,152 @@ const UserGroupList = () => {
     navigate(`/join-session/${groupId}`);
   };
 
+  const handleOpenFeedback = () => {
+    setFeedbackOpen(true);
+  };
+
+  const handleCloseFeedback = () => {
+    setFeedbackOpen(false);
+    setFeedbackType('');
+    setFeedbackMessage('');
+    setSelectedGroup('');
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!feedbackType || !feedbackMessage || !selectedGroup) {
+      alert('Please fill all fields');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const url = `http://localhost:4000/api/user/submitfeedback`;
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${accessToken}`
+      };
+      
+      const requestBody = {
+        type: feedbackType,
+        message: feedbackMessage,
+        group: selectedGroup,
+        customerRef_no: userId
+      };
+
+      const response = await axios.post(url, requestBody, { headers });
+     
+      // console.log("Response of feedback submit", response.data);
+      
+      if (response.data.error === false) {
+          Swal.fire({
+  title: "Good job!",
+  text: "Thank you for your feedback",
+  icon: "success"
+});
+        handleCloseFeedback();
+      } else {
+        alert(response.data.message || 'Failed to submit feedback');
+      }
+    } catch (error) {
+      console.log(error);
+      alert(error.response?.data?.message || 'Something went wrong');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <>
       <PageTitle page={"User Groups"} />
       
       <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+          <Button
+            variant="contained"
+            startIcon={<Feedback />}
+            onClick={handleOpenFeedback}
+          >
+            Submit Feedback
+          </Button>
+        </Box>
+
+        {/* Feedback Modal */}
+        <Modal
+          open={feedbackOpen}
+          onClose={handleCloseFeedback}
+          aria-labelledby="feedback-modal-title"
+          aria-describedby="feedback-modal-description"
+        >
+          <Box sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 400,
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 1
+          }}>
+            <Typography id="feedback-modal-title" variant="h6" component="h2" gutterBottom>
+              Submit Feedback
+            </Typography>
+            
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel id="feedback-type-label">Feedback Type</InputLabel>
+              <Select
+                labelId="feedback-type-label"
+                value={feedbackType}
+                label="Feedback Type"
+                onChange={(e) => setFeedbackType(e.target.value)}
+              >
+                <MenuItem value="Live Session">Live Session</MenuItem>
+                <MenuItem value="Bug">Bug</MenuItem>
+                <MenuItem value="Feature">Feature</MenuItem>
+                <MenuItem value="UI/UX">UI/UX</MenuItem>
+              </Select>
+            </FormControl>
+            
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel id="group-label">Group</InputLabel>
+              <Select
+                labelId="group-label"
+                value={selectedGroup}
+                label="Group"
+                onChange={(e) => setSelectedGroup(e.target.value)}
+              >
+                {groups.map((group) => (
+                  <MenuItem key={group._id} value={group._id}>
+                    {group.groupname}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <TextField
+              fullWidth
+              multiline
+              rows={4}
+              label="Message"
+              value={feedbackMessage}
+              onChange={(e) => setFeedbackMessage(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+              <Button onClick={handleCloseFeedback}>Cancel</Button>
+              <Button 
+                variant="contained" 
+                onClick={handleSubmitFeedback}
+                disabled={submitting}
+              >
+                {submitting ? <CircularProgress size={24} /> : 'Submit'}
+              </Button>
+            </Box>
+          </Box>
+        </Modal>
+
         {loading ? (
           <Grid container spacing={3}>
             {[1, 2, 3].map((item) => (
