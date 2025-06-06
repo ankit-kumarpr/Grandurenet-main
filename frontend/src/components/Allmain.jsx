@@ -21,7 +21,7 @@ import SelfGroupList from "../Pages/Subadmin/Group/SelfGroupList.jsx";
 import LiveSession from "../Pages/Subadmin/Group/LiveSession.jsx";
 import UserGroupList from "../Pages/User/UserGroupList.jsx";
 import AllgroupList from "../Pages/Admin/Groups/AllgroupList.jsx";
-import FeedbackList from "../Pages/Admin/feedback/FeedbackList.jsx";
+import FeedbackList from "../Pages/Admin/FeedbackList.jsx";
 
 
 const Allmain = () => {
