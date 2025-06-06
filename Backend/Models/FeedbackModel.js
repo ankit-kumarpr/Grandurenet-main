@@ -15,9 +15,9 @@ const FeedbackSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  session: {
+  group: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'LiveSession', // Optional, used for session feedback
+    ref: 'Group',
     default: null
   },
   createdAt: {
