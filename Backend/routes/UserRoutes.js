@@ -26,8 +26,8 @@ const {
     GetGroupListOfAdmin,
     GetGroupListOfUser,
     GetChatHistory,
-    GetGroupInfo
-
+    GetGroupInfo,
+      GetAllFeedbacks
 }=require('../Controller/SuperadminController');
 
 
@@ -66,5 +66,6 @@ const {
 
     router.post('/submitfeedback',auth, AddFeedBack);
     router.get('/getfeedbacks/type/:type/date/:date/user/:userId',auth, role(["SuperAdmin","Admin"]), GetFeedbacklist);
+router.get('/feedbacks',auth, role(["SuperAdmin"]),GetAllFeedbacks)
 
     module.exports=router;
