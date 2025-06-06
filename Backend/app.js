@@ -1,6 +1,6 @@
-const dotenv = require("dotenv").config();
+const dotenv = require("dotenv");
+dotenv.config();
 const express = require("express");
-const path = require("path");
 const app = express();
 const cors = require("cors");
 const bodyParser = require('body-parser');
@@ -18,14 +18,4 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use('/api/user',UserRoutes);
 
-app.use(express.static(path.join(__dirname, "dist")));
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
-
-
 module.exports = app;
-
-
-
-
