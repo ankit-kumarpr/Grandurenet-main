@@ -60,7 +60,7 @@ const SuperAdminDashboard = () => {
 
   const GetAdminData = async () => {
     try {
-      const url = `http://localhost:4000/api/user/getalladmin`;
+      const url = `https://grandurenet-main.onrender.com/api/user/getalladmin`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -75,7 +75,7 @@ const SuperAdminDashboard = () => {
 
   const GetUserData = async () => {
     try {
-      const url = `http://localhost:4000/api/user/alluserlist`;
+      const url = `https://grandurenet-main.onrender.com/api/user/alluserlist`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -90,7 +90,7 @@ const SuperAdminDashboard = () => {
 
   const FeedBackListAPI = async () => {
     try {
-      const url = `http://localhost:4000/api/user/feedbacks`;
+      const url = `https://grandurenet-main.onrender.com/api/user/feedbacks`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
