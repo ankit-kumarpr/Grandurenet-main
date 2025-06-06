@@ -838,30 +838,38 @@ const GetLiveSessionByUserId = async (req, res) => {
 
 const AddFeedBack = async (req, res) => {
   try {
-    const { type, message, session, customerRef_no } = req.body;
-    console.log("user id", customerRef_no);
+    const { type, message, group, customerRef_no } = req.body;
+
+    if (!type || !message || !group || !customerRef_no) {
+      return res.status(400).json({
+        error: true,
+        message: "Missing required fields: type, message, group, or customerRef_no",
+      });
+    }
+
     const feedback = new Feedback({
       user: customerRef_no,
       type,
       message,
-      session: session || null,
+      group,
     });
 
     await feedback.save();
 
     return res.status(200).json({
-      error: true,
-      message: "Feedback Submitted Successfully",
+      error: false,
+      message: "Feedback submitted successfully",
       data: feedback,
     });
+
   } catch (error) {
+    console.error("Error submitting feedback:", error);
     return res.status(500).json({
       error: true,
       message: "Internal server error",
     });
   }
 };
-
 // get all feedbacks of user view only by admin or super admin
 
 const GetFeedbacklist = async (req, res) => {
@@ -895,6 +903,35 @@ const GetFeedbacklist = async (req, res) => {
     });
   }
 };
+
+const GetAllFeedbacks = async (req, res) => {
+  try {
+    const feedbacks = await Feedback.find()
+      .populate("user", "name email") // fetch user name and email
+      .populate("group", "groupname grouptype") // fetch group name and type
+      .sort({ createdAt: -1 });
+
+    if (feedbacks.length === 0) {
+      return res.status(404).json({
+        error: true,
+        message: "No feedbacks found",
+      });
+    }
+
+    return res.status(200).json({
+      error: false,
+      message: "All feedbacks fetched successfully",
+      data: feedbacks,
+    });
+  } catch (error) {
+    console.error("Error fetching feedbacks:", error);
+    return res.status(500).json({
+      error: true,
+      message: "Internal server error",
+    });
+  }
+};
+
 
 // get gorup list
 const GetGroupListOfUser = async (req, res) => {
@@ -1006,4 +1043,5 @@ module.exports = {
   GetGroupListOfUser,
   GetChatHistory,
   GetGroupInfo,
+    GetAllFeedbacks
 };
