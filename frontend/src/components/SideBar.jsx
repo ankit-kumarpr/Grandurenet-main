@@ -105,7 +105,13 @@ const SideBar = () => {
                 <span className="nav-heading collapsed">All Groups</span>
               </Link>
             </li>
-           
+
+             <li className="nav-item">
+              <Link className="nav-link" to="/feedbacks">
+                <IoGridOutline size={20} />
+                <span className="nav-heading collapsed">Feedbacks</span>
+              </Link>
+            </li>
           </>
         )}
 
