@@ -21,6 +21,7 @@ import SelfGroupList from "../Pages/Subadmin/Group/SelfGroupList.jsx";
 import LiveSession from "../Pages/Subadmin/Group/LiveSession.jsx";
 import UserGroupList from "../Pages/User/UserGroupList.jsx";
 import AllgroupList from "../Pages/Admin/Groups/AllgroupList.jsx";
+import FeedbackList from "../Pages/Admin/feedback/FeedbackList.jsx";
 
 
 const Allmain = () => {
@@ -40,7 +41,8 @@ const Allmain = () => {
           "/Assign-group":"Assing Group",
           "/Your Groups":"Your Groups",
           "/User Group":"User Group",
-          "/All Group":"All Group"
+          "/All Group":"All Group",
+         "/FeedBack List":"Feedbacks"
          
         };
 
@@ -74,7 +76,7 @@ const Allmain = () => {
           <Route path="/join-session/:groupId" element={<LiveSession />} />
           <Route path="/user-group" element={<UserGroupList />} />
           <Route path="/all-group" element={<AllgroupList />} />
-       
+<Route path="/feedbacks" element={<FeedbackList />} />       
 
           
         </Routes>
