@@ -9,7 +9,7 @@ import {
   Paper
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import PageTitle from '../../../components/PageTitle';
+import PageTitle from '../../components/PageTitle';
 
 const FeedbackList = () => {
   const [feedbacks, setFeedbacks] = useState([]);
