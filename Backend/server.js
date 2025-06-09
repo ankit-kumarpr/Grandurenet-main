@@ -1,6 +1,5 @@
 const http = require("http");
 const app = require("./app");
-const dotenv = require("dotenv");
 const port = process.env.PORT || 3000;
 const ChatMessage = require("./Models/ChatMessage");
 
@@ -20,46 +19,59 @@ const onlineUsers = new Map();
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // User joins a chat session
-  socket.on("joinSession", ({ sessionId, userId }) => {
-    console.log("in server", sessionId,userId);
-    socket.join(sessionId);
+  // User joins a chat room
+  socket.on("joinSession", ({ roomId, userId }) => {
+    console.log("User joined room:", roomId, userId);
+    socket.join(roomId);
     socket.userId = userId;
-    socket.sessionId = sessionId;
-    
+    socket.roomId = roomId;
+
     onlineUsers.set(userId, socket.id);
-    io.to(sessionId).emit('onlineUsers', Array.from(onlineUsers.keys()));
-    
-    console.log(`User ${userId} joined session ${sessionId}`);
+    io.to(roomId).emit("onlineUsers", Array.from(onlineUsers.keys()));
+
+    console.log(`User ${userId} joined room ${roomId}`);
   });
 
-  // Handle chat messages
-  socket.on("sendMessage", async ({ sessionId, userId, message }) => {
+  // Handle sending a message
+
+  socket.on("sendMessage", async ({ message }) => {
+    const roomId = socket.roomId;
+    const userId = socket.userId;
+
+    if (!roomId || !userId) {
+      console.error("Missing roomId or userId for socket:", socket.id);
+      return;
+    }
+
+    console.log("Sending message to roomId:", roomId);
+    console.log("From userId:", userId);
+    console.log("Message content:", message);
+
     try {
+      
       const chatMsg = new ChatMessage({
-        session: sessionId,
+        room: roomId,
         sender: userId,
         message,
       });
-      
-      await chatMsg.save();
 
-      // Populate sender info before sending
+      const response = await chatMsg.save();
+      console.log("Message saved:", response);
+
       const populatedMsg = await ChatMessage.findById(chatMsg._id)
-        .populate('sender', 'name email')
+        .populate("sender", "name email")
         .lean();
 
-      // Broadcast message to everyone in the session including sender
-      io.to(sessionId).emit("receiveMessage", {
+      io.to(roomId).emit("receiveMessage", {
         _id: populatedMsg._id,
-        session: populatedMsg.session,
+        room: populatedMsg.room,
         message: populatedMsg.message,
         sentAt: populatedMsg.sentAt,
         sender: {
           _id: populatedMsg.sender._id,
           name: populatedMsg.sender.name,
-          email: populatedMsg.sender.email
-        }
+          email: populatedMsg.sender.email,
+        },
       });
     } catch (err) {
       console.error("Error saving message:", err);
@@ -70,14 +82,16 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     if (socket.userId) {
       onlineUsers.delete(socket.userId);
-      if (socket.sessionId) {
-        io.to(socket.sessionId).emit('onlineUsers', Array.from(onlineUsers.keys()));
+      if (socket.roomId) {
+        io.to(socket.roomId).emit(
+          "onlineUsers",
+          Array.from(onlineUsers.keys())
+        );
       }
     }
     console.log("User disconnected:", socket.id);
   });
 });
-
 
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
