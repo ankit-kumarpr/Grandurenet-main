@@ -38,7 +38,8 @@ import {
   ArrowForward,
   VideoCall,
   Schedule,
-  Feedback
+  Feedback,
+  MeetingRoom
 } from '@mui/icons-material';
 import PageTitle from '../../components/PageTitle';
 import { jwtDecode } from 'jwt-decode';
@@ -53,8 +54,11 @@ const UserGroupList = () => {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [roomsModalOpen, setRoomsModalOpen] = useState(false);
+  const [groupRooms, setGroupRooms] = useState([]);
+  const [selectedGroupName, setSelectedGroupName] = useState('');
   const accessToken = sessionStorage.getItem('accessToken');
-   const decodedToken = jwtDecode(accessToken);
+  const decodedToken = jwtDecode(accessToken);
   const userId = decodedToken.id;
   const navigate = useNavigate();
 
@@ -65,7 +69,7 @@ const UserGroupList = () => {
   const GetGroupsapi = async () => {
     try {
       setLoading(true);
-      const url = `https://grandurenet-main.onrender.com/api/user/getusergroup`;
+      const url = `http://localhost:4000/api/user/getusergroup`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -80,13 +84,52 @@ const UserGroupList = () => {
     }
   };
 
+  const handleViewRoom = async (groupId, groupName) => {
+    try {
+      const url = `http://localhost:4000/api/user/room-group/${groupId}`;
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${accessToken}`
+      };
+
+      const response = await axios.get(url, { headers });
+      console.log("rooms api response", response.data);
+      
+      if (response.data.error === false && response.data.data?.length > 0) {
+        setGroupRooms(response.data.data);
+        setSelectedGroupName(groupName);
+        setRoomsModalOpen(true);
+      } else {
+        Swal.fire({
+          title: "No Rooms",
+          text: "No rooms found for this group",
+          icon: "info"
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      Swal.fire({
+        title: "Error",
+        text: error.response?.data?.message || "Something went wrong",
+        icon: "error"
+      });
+    }
+  };
+
+  const handleJoinRoom = (roomId) => {
+    navigate(`/join-session/${roomId}`);
+  };
+
+  const handleCloseRoomsModal = () => {
+    setRoomsModalOpen(false);
+    setGroupRooms([]);
+    setSelectedGroupName('');
+  };
+
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
-  };
-
-  const handleJoinChat = (groupId) => {
-    navigate(`/join-session/${groupId}`);
   };
 
   const handleOpenFeedback = () => {
@@ -108,7 +151,7 @@ const UserGroupList = () => {
 
     try {
       setSubmitting(true);
-      const url = `https://grandurenet-main.onrender.com/api/user/submitfeedback`;
+      const url = `http://localhost:4000/api/user/submitfeedback`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -124,14 +167,12 @@ const UserGroupList = () => {
 
       const response = await axios.post(url, requestBody, { headers });
      
-      // console.log("Response of feedback submit", response.data);
-      
       if (response.data.error === false) {
           Swal.fire({
-  title: "Good job!",
-  text: "Thank you for your feedback",
-  icon: "success"
-});
+            title: "Good job!",
+            text: "Thank you for your feedback",
+            icon: "success"
+          });
         handleCloseFeedback();
       } else {
         alert(response.data.message || 'Failed to submit feedback');
@@ -158,6 +199,94 @@ const UserGroupList = () => {
             Submit Feedback
           </Button>
         </Box>
+
+        {/* Rooms Modal */}
+        <Modal
+          open={roomsModalOpen}
+          onClose={handleCloseRoomsModal}
+          aria-labelledby="rooms-modal-title"
+          aria-describedby="rooms-modal-description"
+        >
+          <Box sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 500,
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 1,
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}>
+            <Typography id="rooms-modal-title" variant="h5" component="h2" gutterBottom>
+              Rooms for {selectedGroupName}
+            </Typography>
+            
+            {groupRooms.length > 0 ? (
+              <List sx={{ width: '100%' }}>
+                {groupRooms.map((room) => (
+                  <ListItem 
+                    key={room._id} 
+                    secondaryAction={
+                      <Button 
+                        variant="contained" 
+                        color="primary"
+                        onClick={() => handleJoinRoom(room._id)}
+                        startIcon={<MeetingRoom />}
+                      >
+                        Join Now
+                      </Button>
+                    }
+                    sx={{
+                      mb: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1
+                    }}
+                  >
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: 'primary.main' }}>
+                        <MeetingRoom />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={room.roomName}
+                      secondary={
+                        <>
+                          <Typography component="span" variant="body2" color="text.primary">
+                            Room ID: {room.roomId}
+                          </Typography>
+                          <br />
+                          <Typography component="span" variant="body2" color="text.secondary">
+                            Created: {formatDate(room.createdAt)}
+                          </Typography>
+                        </>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                minHeight: 100
+              }}>
+                <Typography variant="body1" color="text.secondary">
+                  No rooms available for this group
+                </Typography>
+              </Box>
+            )}
+            
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+              <Button onClick={handleCloseRoomsModal}>Close</Button>
+            </Box>
+          </Box>
+        </Modal>
 
         {/* Feedback Modal */}
         <Modal
@@ -355,11 +484,10 @@ const UserGroupList = () => {
                     <Button
                       fullWidth
                       variant="contained"
-                      startIcon={<Chat />}
-                      onClick={() => handleJoinChat(group._id)}
-                      disabled={group.chat !== "enabled"}
+                      startIcon={<MeetingRoom />}
+                      onClick={() => handleViewRoom(group._id, group.groupname)}
                     >
-                      Live Chat
+                      View Rooms
                     </Button>
                   </Box>
                 </Card>
