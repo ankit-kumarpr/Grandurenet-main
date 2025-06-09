@@ -19,7 +19,21 @@ import {
   ListItemAvatar,
   ListItemText,
   Skeleton,
-  Button
+  Button,
+  Modal,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Collapse,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
 } from '@mui/material';
 import {
   Group,
@@ -28,15 +42,38 @@ import {
   Chat,
   DoNotDisturbOn,
   Person,
-  Message
+  MeetingRoom,
+  KeyboardArrowDown,
+  KeyboardArrowUp,
+  Visibility,
+  Login
 } from '@mui/icons-material';
 
+const style = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  bgcolor: 'background.paper',
+  boxShadow: 24,
+  p: 4,
+  borderRadius: 2
+};
 
 const SelfGroupList = () => {
   const accessToken = sessionStorage.getItem("accessToken");
-
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [roomData, setRoomData] = useState({
+    roomId: '',
+    roomName: ''
+  });
+  const [expandedGroup, setExpandedGroup] = useState(null);
+  const [groupRooms, setGroupRooms] = useState({});
+  const [roomsLoading, setRoomsLoading] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -46,7 +83,7 @@ const SelfGroupList = () => {
   const GetYourgroupsList = async () => {
     try {
       setLoading(true);
-      const url = `https://grandurenet-main.onrender.com/api/user/admingroups`;
+      const url = `http://localhost:4000/api/user/admingroups`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -67,8 +104,103 @@ const SelfGroupList = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const handleStartChat = (groupId) => {
-    navigate(`/join-session/${groupId}`);
+  const handleOpen = (group) => {
+    setSelectedGroup(group);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedGroup(null);
+    setRoomData({
+      roomId: '',
+      roomName: ''
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setRoomData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const CreateRoomForGroup = async () => {
+    try {
+      if (!selectedGroup || !roomData.roomId || !roomData.roomName) return;
+      
+      const url = `http://localhost:4000/api/user/createroom`;
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${accessToken}`
+      };
+
+      const userIds = selectedGroup.users.map(user => user._id);
+      
+      const payload = {
+        roomId: roomData.roomId,
+        roomName: roomData.roomName,
+        groupId: selectedGroup._id,
+        userId: userIds
+      };
+
+      const response = await axios.post(url, payload, { headers });
+      console.log("Response of the create room", response.data);
+      
+      // Refresh rooms list for this group after creation
+      if (expandedGroup === selectedGroup._id) {
+        getRoomList(selectedGroup._id);
+      }
+      
+      handleClose();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getRoomList = async (groupId) => {
+    try {
+      setRoomsLoading(prev => ({ ...prev, [groupId]: true }));
+      const url = `http://localhost:4000/api/user/room-group/${groupId}`;
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${accessToken}`
+      };
+
+      const response = await axios.get(url, { headers });
+      console.log("Response of room list",response.data);
+      setGroupRooms(prev => ({
+        ...prev,
+        [groupId]: response.data.data || []
+      }));
+    } catch (error) {
+      console.log(error);
+      setGroupRooms(prev => ({
+        ...prev,
+        [groupId]: []
+      }));
+    } finally {
+      setRoomsLoading(prev => ({ ...prev, [groupId]: false }));
+    }
+  };
+
+  const toggleExpandGroup = (groupId) => {
+    if (expandedGroup === groupId) {
+      setExpandedGroup(null);
+    } else {
+      setExpandedGroup(groupId);
+      if (!groupRooms[groupId]) {
+        getRoomList(groupId);
+      }
+    }
+  };
+
+  const handleJoinRoom = (roomId) => {
+    console.log("room Id in group",roomId);
+    navigate(`/join-session/${roomId}`);
   };
 
   return (
@@ -185,17 +317,84 @@ const SelfGroupList = () => {
                     </Paper>
                   </CardContent>
 
-                  <Box sx={{ p: 2 }}>
+                  <Box sx={{ p: 2, display: 'flex', gap: 2 }}>
                     <Button
                       fullWidth
                       variant="contained"
-                      startIcon={<Message />}
-                      onClick={() => handleStartChat(group._id)}
-                      disabled={group.chat !== "enabled"}
+                      startIcon={<MeetingRoom />}
+                      onClick={() => handleOpen(group)}
                     >
-                      Start Chat Now
+                      Create Room
+                    </Button>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      startIcon={<Visibility />}
+                      onClick={() => toggleExpandGroup(group._id)}
+                      endIcon={
+                        expandedGroup === group._id ? 
+                          <KeyboardArrowUp /> : 
+                          <KeyboardArrowDown />
+                      }
+                    >
+                      View Rooms
                     </Button>
                   </Box>
+
+                  <Collapse in={expandedGroup === group._id} timeout="auto" unmountOnExit>
+                    <Box sx={{ p: 2, pt: 0 }}>
+                      {roomsLoading[group._id] ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                          <Skeleton variant="circular" width={40} height={40} />
+                        </Box>
+                      ) : groupRooms[group._id]?.length > 0 ? (
+                        <TableContainer component={Paper}>
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>Room Name</TableCell>
+                                <TableCell>Room ID</TableCell>
+                                <TableCell align="right">Action</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {groupRooms[group._id].map((room) => (
+                                <TableRow key={room._id}>
+                                  <TableCell>{room.roomName}</TableCell>
+                                  <TableCell>{room.roomId}</TableCell>
+                                  <TableCell align="right">
+                                    <Button
+                                      size="small"
+                                      variant="contained"
+                                      color="success"
+                                      startIcon={<Login />}
+                                      onClick={() => handleJoinRoom(room._id)}
+                                    >
+                                      Join Now
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      ) : (
+                        <Box sx={{ 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          py: 3,
+                          textAlign: 'center'
+                        }}>
+                          <MeetingRoom sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+                          <Typography variant="body1" color="text.secondary">
+                            No rooms created yet
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Collapse>
                 </Card>
               </Grid>
             ))}
@@ -219,6 +418,48 @@ const SelfGroupList = () => {
           </Box>
         )}
       </Container>
+
+      {/* Create Room Modal */}
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Create New Room</DialogTitle>
+        <DialogContent>
+          <Box component="form" sx={{ mt: 2 }}>
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Room ID"
+              name="roomId"
+              value={roomData.roomId}
+              onChange={handleInputChange}
+              required
+            />
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Room Name"
+              name="roomName"
+              value={roomData.roomName}
+              onChange={handleInputChange}
+              required
+            />
+            {selectedGroup && (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                This room will be created for group: {selectedGroup.groupname}
+              </Typography>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button 
+            onClick={CreateRoomForGroup}
+            variant="contained"
+            disabled={!roomData.roomId || !roomData.roomName}
+          >
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
