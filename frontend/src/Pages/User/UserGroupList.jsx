@@ -76,6 +76,7 @@ const UserGroupList = () => {
         Authorization: `Bearer ${accessToken}`
       };
       const response = await axios.get(url, { headers });
+      console.log("Response of group list",response.data);
       setGroups(response.data.groups || []);
     } catch (error) {
       console.log(error);
