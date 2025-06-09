@@ -12,11 +12,13 @@ function Logo() {
 
   return (
     <div className='d-flex align-items-center justify-content-between'>
-      <a href='/' className='logo d-flex align-items-center text-decoration-none'>
+      {/* <a href='/' className='logo d-flex align-items-center text-decoration-none'> */}
 
-        <img src="" alt='Your Logo' style={{ height: "auto", width: "150px" }} />
+  <h3 class="logo-text">Infun. <span>India</span></h3>
 
-      </a>
+        {/* <img src="" alt='Your Logo' style={{ height: "auto", width: "150px" }} /> */}
+
+      {/* </a> */}
       <HiMenuAlt1 className='toggle-sidebar-btn m-2' onClick={handleToggleSideBar} />
 
     </div>
