@@ -72,6 +72,7 @@ const MessageBubble = styled(Box)(({ theme, own }) => ({
 
 const LiveSession = () => {
   const { roomId } = useParams();
+  console.log("Room ID in live session",roomId);
   const accessToken = sessionStorage.getItem("accessToken");
   const navigate = useNavigate();
   const theme = useTheme();
@@ -158,9 +159,10 @@ const LiveSession = () => {
     });
 
     setSocket(newSocket);
-
+console.log("room id outside",roomId);
     const fetchInitialData = async () => {
       try {
+        console.log("roomID inside",roomId);
         // Fetch group info
         const groupRes = await axios.get(
           `https://grandurenet-main.onrender.com/api/user/room/${roomId}`,
@@ -173,6 +175,7 @@ const LiveSession = () => {
         setGroupInfo(groupRes.data.room);
 
         // Fetch chat history
+        console.log("Room Id history outside",roomId);
         const chatRes = await axios.get(
           `https://grandurenet-main.onrender.com/api/user/chat-history/${roomId}`,
           {
