@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const ChatMessageSchema = new mongoose.Schema({
-  session: {
+  room: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'LiveSession',
+    ref: 'Room',
     required: true
   },
   sender: {
