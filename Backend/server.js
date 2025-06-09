@@ -32,8 +32,7 @@ io.on("connection", (socket) => {
     console.log(`User ${userId} joined room ${roomId}`);
   });
 
-  // Handle sending a message
-
+  // Handle sending a chat message
   socket.on("sendMessage", async ({ message }) => {
     const roomId = socket.roomId;
     const userId = socket.userId;
@@ -48,7 +47,6 @@ io.on("connection", (socket) => {
     console.log("Message content:", message);
 
     try {
-      
       const chatMsg = new ChatMessage({
         room: roomId,
         sender: userId,
@@ -78,15 +76,30 @@ io.on("connection", (socket) => {
     }
   });
 
+  // WebRTC Audio Call - Offer
+  socket.on("audio-offer", ({ roomId, offer, senderId }) => {
+    console.log(`Audio Offer from ${senderId} to room ${roomId}`);
+    socket.to(roomId).emit("audio-offer", { offer, senderId });
+  });
+
+  // WebRTC Audio Call - Answer
+  socket.on("audio-answer", ({ roomId, answer, senderId }) => {
+    console.log(`Audio Answer from ${senderId} to room ${roomId}`);
+    socket.to(roomId).emit("audio-answer", { answer, senderId });
+  });
+
+  // WebRTC ICE Candidate
+  socket.on("audio-ice-candidate", ({ roomId, candidate, senderId }) => {
+    console.log(`ICE Candidate from ${senderId} in room ${roomId}`);
+    socket.to(roomId).emit("audio-ice-candidate", { candidate, senderId });
+  });
+
   // Handle disconnect
   socket.on("disconnect", () => {
     if (socket.userId) {
       onlineUsers.delete(socket.userId);
       if (socket.roomId) {
-        io.to(socket.roomId).emit(
-          "onlineUsers",
-          Array.from(onlineUsers.keys())
-        );
+        io.to(socket.roomId).emit("onlineUsers", Array.from(onlineUsers.keys()));
       }
     }
     console.log("User disconnected:", socket.id);
