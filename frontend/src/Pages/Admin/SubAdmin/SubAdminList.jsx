@@ -34,7 +34,7 @@ const SubAdminList = () => {
   const GetAdminData = async () => {
     try {
       setLoading(true);
-      const url = `http://localhost:4000/api/user/getalladmin`;
+      const url = `https://grandurenet-main.onrender.com/api/user/getalladmin`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -77,7 +77,7 @@ const SubAdminList = () => {
 
   const BanAdminAPI = async () => {
     try {
-      const url = `http://localhost:4000/api/user/banadmin/${selectedAdmin._id}`;
+      const url = `https://grandurenet-main.onrender.com/api/user/banadmin/${selectedAdmin._id}`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -116,7 +116,7 @@ if(response.data.error==false){
 
   const UnbanAdminAPI = async (adminId) => {
     try {
-      const url = `http://localhost:4000/api/user/unbanadmin/${adminId}`;
+      const url = `https://grandurenet-main.onrender.com/api/user/unbanadmin/${adminId}`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
