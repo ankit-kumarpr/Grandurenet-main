@@ -34,7 +34,7 @@ const SubAdminList = () => {
   const GetAdminData = async () => {
     try {
       setLoading(true);
-      const url = `https://grandurenet-main.onrender.com/api/user/getalladmin`;
+      const url = `http://localhost:4000/api/user/getalladmin`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -47,13 +47,7 @@ const SubAdminList = () => {
       const transformedData = response.data.data.map((admin, index) => ({
         ...admin,
         srNo: index + 1,
-        formattedAddress: admin.Address
-          ? `${admin.Address.addressline1 || ""}, ${
-              admin.Address.addressline2 || ""
-            }, ${admin.Address.city || ""}, ${admin.Address.state || ""} - ${
-              admin.Address.zip || ""
-            }`
-          : "N/A",
+  
         formattedDate: admin.createdAt
           ? new Date(admin.createdAt).toLocaleString()
           : "N/A",
@@ -83,7 +77,7 @@ const SubAdminList = () => {
 
   const BanAdminAPI = async () => {
     try {
-      const url = `https://grandurenet-main.onrender.com/api/user/banadmin/${selectedAdmin._id}`;
+      const url = `http://localhost:4000/api/user/banadmin/${selectedAdmin._id}`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -122,7 +116,7 @@ if(response.data.error==false){
 
   const UnbanAdminAPI = async (adminId) => {
     try {
-      const url = `https://grandurenet-main.onrender.com/api/user/unbanadmin/${adminId}`;
+      const url = `http://localhost:4000/api/user/unbanadmin/${adminId}`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -165,7 +159,7 @@ if(response.data.error==false){
     { field: "email", headerName: "Email", width: 200 },
     { field: "phone", headerName: "Phone", width: 130 },
     { field: "gender", headerName: "Gender", width: 100 },
-    { field: "formattedAddress", headerName: "Address", width: 250 },
+    // { field: "formattedAddress", headerName: "Address", width: 250 },
     { field: "role", headerName: "Role", width: 100 },
     { field: "formattedDate", headerName: "Created At", width: 180 },
     {
