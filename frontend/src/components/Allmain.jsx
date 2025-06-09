@@ -75,7 +75,7 @@ const Allmain = () => {
           <Route path="/create-group" element={<CreateGroup />} />
           <Route path="/assign-group" element={<AsssignGroupToAdmin />} />
           <Route path="/my-groups" element={<SelfGroupList />} />
-          <Route path="/join-session/:groupId" element={<LiveSession />} />
+          <Route path="/join-session/:roomId" element={<LiveSession />} />
           <Route path="/user-group" element={<UserGroupList />} />
           <Route path="/all-group" element={<AllgroupList />} />
 <Route path="/feedbacks" element={<FeedbackList />} />     
