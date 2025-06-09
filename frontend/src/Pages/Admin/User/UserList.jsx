@@ -28,13 +28,13 @@ const UserList = () => {
   const accesstoken = sessionStorage.getItem("accessToken");
 
   useEffect(() => {
-    GetAdminData();
+    GetuserData();
   }, []);
 
-  const GetAdminData = async () => {
+  const GetuserData = async () => {
     try {
       setLoading(true);
-      const url = `https://grandurenet-main.onrender.com/api/user/alluserlist`;
+      const url = `http://localhost:4000/api/user/alluserlist`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -42,7 +42,7 @@ const UserList = () => {
       };
 
       const response = await axios.get(url, { headers });
-      console.log("Response of admin list", response.data);
+      console.log("Response of user list", response.data);
 
       const transformedData = response.data.data.map((admin, index) => ({
         ...admin,
@@ -83,7 +83,7 @@ const UserList = () => {
 
   const BanAdminAPI = async () => {
     try {
-      const url = `https://grandurenet-main.onrender.com/api/user/userban/${selectedAdmin._id}`;
+      const url = `http://localhost:4000/api/user/userban/${selectedAdmin._id}`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -122,7 +122,7 @@ if(response.data.error==false){
 
   const UnbanAdminAPI = async (adminId) => {
     try {
-      const url = `https://grandurenet-main.onrender.com/api/user/unbanuser/${adminId}`;
+      const url = `http://localhost:4000/api/user/unbanuser/${adminId}`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -161,12 +161,13 @@ if(response.data.error==false){
       width: 80,
       sortable: false,
     },
+    { field: "customerRef_no", headerName: "UserId", width: 150 },
     { field: "name", headerName: "Name", width: 150 },
-    { field: "email", headerName: "Email", width: 200 },
+    // { field: "email", headerName: "Email", width: 200 },
     { field: "phone", headerName: "Phone", width: 130 },
     { field: "gender", headerName: "Gender", width: 100 },
-    { field: "formattedAddress", headerName: "Address", width: 250 },
-    { field: "role", headerName: "Role", width: 100 },
+    // { field: "formattedAddress", headerName: "Address", width: 250 },
+    // { field: "role", headerName: "Role", width: 100 },
     { field: "formattedDate", headerName: "Created At", width: 180 },
     {
       field: "banStatus",
