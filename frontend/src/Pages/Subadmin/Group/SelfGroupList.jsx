@@ -131,7 +131,7 @@ const SelfGroupList = () => {
       if (!selectedGroup || !roomData.roomId || !roomData.roomName) return;
       console.log("Selected group",selectedGroup);
       console.log("room Id",roomData.roomId);
-      console.log("room Name",roomName);
+      console.log("room Name",roomData.roomName);
       
       const url = `https://grandurenet-main.onrender.com/api/user/createroom`;
       const headers = {
