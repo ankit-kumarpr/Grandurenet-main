@@ -7,6 +7,11 @@ import { IoGridOutline } from "react-icons/io5";
 import { MdOutlineProductionQuantityLimits } from "react-icons/md";
 import { MdHistoryEdu } from "react-icons/md";
 import { MdOutlineCategory } from "react-icons/md";
+import { LuMessageCircleMore } from "react-icons/lu";
+import { VscFeedback } from "react-icons/vsc";
+import { GrUserAdmin } from "react-icons/gr";
+import { FaGroupArrowsRotate } from "react-icons/fa6";
+
 import { Link } from "react-router-dom";
 
 const SideBar = () => {
@@ -40,7 +45,7 @@ const SideBar = () => {
                 className="nav-link"
                 onClick={() => toggleDropdown("admin")}
               >
-                <MdOutlineCategory size={20} />
+                <GrUserAdmin size={20} />
                 <span className="nav-heading collapsed">Admin</span>
               </div>
               {dropdowns.admin && (
@@ -69,7 +74,7 @@ const SideBar = () => {
                 className="nav-link"
                 onClick={() => toggleDropdown("user")}
               >
-                <MdOutlineCategory size={20} />
+                <FaUsers size={20} />
                 <span className="nav-heading collapsed">User</span>
               </div>
               {dropdowns.user && (
@@ -95,23 +100,23 @@ const SideBar = () => {
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/assign-group">
-                <IoGridOutline size={20} />
+                <FaGroupArrowsRotate size={20} />
                 <span className="nav-heading collapsed">Assing Group</span>
               </Link>
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/all-group">
-                <IoGridOutline size={20} />
-                <span className="nav-heading collapsed">All Groups</span>
+                <LuMessageCircleMore  size={20} />
+                <span className="nav-heading collapsed">Room</span>
               </Link>
             </li>
-
-             <li className="nav-item">
+            <li className="nav-item">
               <Link className="nav-link" to="/feedbacks">
-                <IoGridOutline size={20} />
+                <VscFeedback  size={20} />
                 <span className="nav-heading collapsed">Feedbacks</span>
               </Link>
             </li>
+           
           </>
         )}
 
@@ -127,7 +132,7 @@ const SideBar = () => {
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/create-group">
-                <IoGridOutline size={20} />
+                <FaGroupArrowsRotate size={20} />
                 <span className="nav-heading collapsed">
                   Create Group
                 </span>
@@ -135,9 +140,9 @@ const SideBar = () => {
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/my-groups">
-                <IoGridOutline size={20} />
+                <LuMessageCircleMore size={20} />
                 <span className="nav-heading collapsed">
-                  Your Groups
+                  Message
                 </span>
               </Link>
             </li>
@@ -157,9 +162,9 @@ const SideBar = () => {
          
             <li className="nav-item">
               <Link className="nav-link" to="/user-group">
-                <IoGridOutline size={20} />
+                <LuMessageCircleMore size={20} />
                 <span className="nav-heading collapsed">
-                  Your Groups
+                  Rooms
                 </span>
               </Link>
             </li>
