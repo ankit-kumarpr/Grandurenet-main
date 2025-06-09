@@ -34,7 +34,7 @@ const UserList = () => {
   const GetuserData = async () => {
     try {
       setLoading(true);
-      const url = `http://localhost:4000/api/user/alluserlist`;
+      const url = `https://grandurenet-main.onrender.com/api/user/alluserlist`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -83,7 +83,7 @@ const UserList = () => {
 
   const BanAdminAPI = async () => {
     try {
-      const url = `http://localhost:4000/api/user/userban/${selectedAdmin._id}`;
+      const url = `https://grandurenet-main.onrender.com/api/user/userban/${selectedAdmin._id}`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -122,7 +122,7 @@ if(response.data.error==false){
 
   const UnbanAdminAPI = async (adminId) => {
     try {
-      const url = `http://localhost:4000/api/user/unbanuser/${adminId}`;
+      const url = `https://grandurenet-main.onrender.com/api/user/unbanuser/${adminId}`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
