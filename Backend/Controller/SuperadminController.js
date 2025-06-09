@@ -3,11 +3,12 @@ const Group = require("../Models/groupModel");
 const LiveSession = require("../Models/LiveSession");
 const Feedback = require("../Models/FeedbackModel");
 const ChatMessage = require("../Models/ChatMessage");
+const Room = require("../Models/RoomModel");
 
 //  resgiter admin
 
 const ResgisterAdmin = async (req, res) => {
-  const { name, email, phone, Address, gender } = req.body;
+  const { name, email, phone,  gender } = req.body;
 
   try {
     if (!name || !email || !phone) {
@@ -30,7 +31,7 @@ const ResgisterAdmin = async (req, res) => {
       email,
       phone,
       gender,
-      Address,
+     
       role: "Admin",
     });
 
@@ -121,9 +122,65 @@ const DeleteAdmin = async (req, res) => {
 
 // ban admin api
 
+// const BanAdmin = async (req, res) => {
+//   const { customer_ref_no } = req.params;
+//   const { reason, banType, bannedUntil } = req.body || {};
+
+//   if (!customer_ref_no || !reason || !banType) {
+//     return res.status(400).json({
+//       error: true,
+//       message: "Missing required fields (customer_ref_no, reason, banType)",
+//     });
+//   }
+
+//   try {
+//     const user = await User.findOne({ customerRef_no: customer_ref_no });
+
+//     if (!user) {
+//       return res.status(404).json({
+//         error: true,
+//         message: "User not found",
+//       });
+//     }
+
+//     if (user.role !== "Admin") {
+//       return res.status(403).json({
+//         error: true,
+//         message: "Only admins can be banned",
+//       });
+//     }
+
+//     const updateData = {
+//       isBanned: {
+//         status: true,
+//         reason: reason,
+//         bannedUntil: banType === "temporary" ? new Date(bannedUntil) : null,
+//       },
+//     };
+
+//     const updatedUser = await User.findOneAndUpdate(
+//       { customerRef_no: customer_ref_no },
+//       updateData,
+//       { new: true }
+//     );
+
+//     return res.status(200).json({
+//       error: false,
+//       message: "Admin banned successfully",
+//       data: updatedUser,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       error: true,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
 const BanAdmin = async (req, res) => {
   const { customer_ref_no } = req.params;
-  const { reason, banType, bannedUntil } = req.body || {};
+  const { reason, banType, bannedUntil } = req.body;
 
   if (!customer_ref_no || !reason || !banType) {
     return res.status(400).json({
@@ -136,100 +193,164 @@ const BanAdmin = async (req, res) => {
     const user = await User.findOne({ customerRef_no: customer_ref_no });
 
     if (!user) {
-      return res.status(404).json({
-        error: true,
-        message: "User not found",
-      });
+      return res.status(404).json({ error: true, message: "User not found" });
     }
 
     if (user.role !== "Admin") {
-      return res.status(403).json({
-        error: true,
-        message: "Only admins can be banned",
-      });
+      return res
+        .status(403)
+        .json({ error: true, message: "Only admins can be banned" });
     }
 
-    const updateData = {
-      isBanned: {
-        status: true,
-        reason: reason,
-        bannedUntil: banType === "temporary" ? new Date(bannedUntil) : null,
-      },
+    const bannedUntilDate =
+      banType === "temporary" ? new Date(bannedUntil) : null;
+    const performedBy = req.user?._id || null;
+
+    user.isBanned = {
+      status: true,
+      reason,
+      bannedUntil: bannedUntilDate,
     };
 
-    const updatedUser = await User.findOneAndUpdate(
-      { customerRef_no: customer_ref_no },
-      updateData,
-      { new: true }
-    );
+    user.banHistory.push({
+      action: "ban",
+      reason,
+      bannedUntil: bannedUntilDate,
+      performedBy,
+    });
+
+    await user.save();
 
     return res.status(200).json({
       error: false,
       message: "Admin banned successfully",
-      data: updatedUser,
+      data: user,
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      error: true,
-      message: "Internal server error",
-    });
+    console.error("BanAdmin Error:", error);
+    return res.status(500).json({ error: true, message: "Server error" });
   }
 };
 
 // unban any admin after temrory ban autometic unban work
 
+// const UnbanAdmin = async (req, res) => {
+//   const { customer_ref_no } = req.params;
+
+//   try {
+//     if (!customer_ref_no) {
+//       return res.status(400).json({
+//         error: true,
+//         message: "Customer reference number is required",
+//       });
+//     }
+
+//     const user = await User.findOne({ customerRef_no: customer_ref_no });
+
+//     if (!user) {
+//       return res.status(404).json({
+//         error: true,
+//         message: "User not found",
+//       });
+//     }
+
+//     if (user.role !== "Admin") {
+//       return res.status(403).json({
+//         error: true,
+//         message: "Only admins can be unbanned",
+//       });
+//     }
+
+//     // Proceed to unban the admin
+//     const updatedUser = await User.findOneAndUpdate(
+//       { customerRef_no: customer_ref_no },
+//       {
+//         isBanned: {
+//           status: false,
+//           reason: null,
+//           bannedUntil: null,
+//         },
+//       },
+//       { new: true }
+//     );
+
+//     return res.status(200).json({
+//       error: false,
+//       message: "Admin has been unbanned",
+//       data: updatedUser,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       error: true,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
 const UnbanAdmin = async (req, res) => {
   const { customer_ref_no } = req.params;
 
   try {
-    if (!customer_ref_no) {
-      return res.status(400).json({
-        error: true,
-        message: "Customer reference number is required",
-      });
-    }
-
     const user = await User.findOne({ customerRef_no: customer_ref_no });
 
     if (!user) {
-      return res.status(404).json({
-        error: true,
-        message: "User not found",
-      });
+      return res.status(404).json({ error: true, message: "User not found" });
     }
 
     if (user.role !== "Admin") {
-      return res.status(403).json({
-        error: true,
-        message: "Only admins can be unbanned",
-      });
+      return res
+        .status(403)
+        .json({ error: true, message: "Only admins can be unbanned" });
     }
 
-    // Proceed to unban the admin
-    const updatedUser = await User.findOneAndUpdate(
-      { customerRef_no: customer_ref_no },
-      {
-        isBanned: {
-          status: false,
-          reason: null,
-          bannedUntil: null,
-        },
-      },
-      { new: true }
-    );
+    user.isBanned = {
+      status: false,
+      reason: null,
+      bannedUntil: null,
+    };
+
+    user.banHistory.push({
+      action: "unban",
+      reason: "Manual or automatic unban",
+      performedBy: req.user?._id || null,
+    });
+
+    await user.save();
 
     return res.status(200).json({
       error: false,
       message: "Admin has been unbanned",
-      data: updatedUser,
+      data: user,
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      error: true,
-      message: "Internal server error",
+    console.error("UnbanAdmin Error:", error);
+    return res.status(500).json({ error: true, message: "Server error" });
+  }
+};
+
+// ban unban hoitory of admin
+
+const GetBanHistory = async (req, res) => {
+  const { customer_ref_no } = req.params;
+console.log("user Id in chat history",customer_ref_no);
+  try {
+    const user = await User.findOne({ _id: customer_ref_no })
+      .populate("banHistory.performedBy", "name email role")
+      .select("name email banHistory");
+
+    if (!user) {
+      return res.status(404).json({ error: true, message: "User not found" });
+    }
+
+    return res.status(200).json({
+      error: false,
+      message: "Ban history fetched successfully",
+      history: user.banHistory,
     });
+  } catch (error) {
+    console.error("GetBanHistory error:", error);
+    return res.status(500).json({ error: true, message: "Server error" });
   }
 };
 
@@ -238,43 +359,59 @@ const UnbanAdmin = async (req, res) => {
 // resgister user
 
 const ResgiterUser = async (req, res) => {
-  const { name, email, phone, Address, gender } = req.body;
+  const { name, email, phone,  gender } = req.body;
 
   try {
+    // Check for missing fields
     if (!name || !email || !phone) {
       return res.status(400).json({
         error: true,
-        message: "Something went wrong || Missing required filed",
+        message: "Something went wrong || Missing required field",
       });
     }
 
+    // Check if the user already exists
     const user = await User.findOne({ email });
     if (user) {
       return res.status(403).json({
         error: true,
-        message: "User already register",
+        message: "User already registered",
       });
     }
 
+
+    const latestUser = await User.findOne().sort({ customerRef_no: -1 }).exec();
+    let nextUserNumber = "user001"; 
+
+    if (latestUser && latestUser.customerRef_no) {
+     
+      const currentNumber = parseInt(
+        latestUser.customerRef_no.replace("user", ""),
+        10
+      );
+      nextUserNumber = `user${String(currentNumber + 1).padStart(3, "0")}`;
+    }
+
+    
     const newUser = new User({
       name,
       email,
       phone,
       gender,
-      Address,
+     
       role: "User",
+      customerRef_no: nextUserNumber,
     });
-
-    newUser.customerRef_no = newUser._id;
 
     await newUser.save();
 
     return res.status(200).json({
       error: false,
-      message: "User register successfully",
+      message: "User registered successfully",
       data: newUser,
     });
   } catch (error) {
+    console.error("Error during registration:", error);
     return res.status(500).json({
       error: true,
       message: "Internal server error",
@@ -352,6 +489,62 @@ const DeleteAnyUser = async (req, res) => {
 
 // ban user
 
+// const BanUser = async (req, res) => {
+//   const { customer_ref_no } = req.params;
+//   const { reason, banType, bannedUntil } = req.body || {};
+
+//   if (!customer_ref_no || !reason || !banType) {
+//     return res.status(400).json({
+//       error: true,
+//       message: "Missing required fields (customer_ref_no, reason, banType)",
+//     });
+//   }
+
+//   try {
+//     const user = await User.findOne({ customerRef_no: customer_ref_no });
+
+//     if (!user) {
+//       return res.status(404).json({
+//         error: true,
+//         message: "User not found",
+//       });
+//     }
+
+//     if (user.role !== "User") {
+//       return res.status(403).json({
+//         error: true,
+//         message: "Only User can be banned",
+//       });
+//     }
+
+//     const updateData = {
+//       isBanned: {
+//         status: true,
+//         reason: reason,
+//         bannedUntil: banType === "temporary" ? new Date(bannedUntil) : null,
+//       },
+//     };
+
+//     const updatedUser = await User.findOneAndUpdate(
+//       { customerRef_no: customer_ref_no },
+//       updateData,
+//       { new: true }
+//     );
+
+//     return res.status(200).json({
+//       error: false,
+//       message: "User banned successfully",
+//       data: updatedUser,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       error: true,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
 const BanUser = async (req, res) => {
   const { customer_ref_no } = req.params;
   const { reason, banType, bannedUntil } = req.body || {};
@@ -367,40 +560,40 @@ const BanUser = async (req, res) => {
     const user = await User.findOne({ customerRef_no: customer_ref_no });
 
     if (!user) {
-      return res.status(404).json({
-        error: true,
-        message: "User not found",
-      });
+      return res.status(404).json({ error: true, message: "User not found" });
     }
 
     if (user.role !== "User") {
-      return res.status(403).json({
-        error: true,
-        message: "Only User can be banned",
-      });
+      return res
+        .status(403)
+        .json({ error: true, message: "Only Users can be banned" });
     }
 
-    const updateData = {
-      isBanned: {
-        status: true,
-        reason: reason,
-        bannedUntil: banType === "temporary" ? new Date(bannedUntil) : null,
-      },
+    const bannedUntilDate =
+      banType === "temporary" ? new Date(bannedUntil) : null;
+
+    user.isBanned = {
+      status: true,
+      reason,
+      bannedUntil: bannedUntilDate,
     };
 
-    const updatedUser = await User.findOneAndUpdate(
-      { customerRef_no: customer_ref_no },
-      updateData,
-      { new: true }
-    );
+    user.banHistory.push({
+      action: "ban",
+      reason,
+      bannedUntil: bannedUntilDate,
+      performedBy: req.user?._id || null,
+    });
+
+    await user.save();
 
     return res.status(200).json({
       error: false,
       message: "User banned successfully",
-      data: updatedUser,
+      data: user,
     });
   } catch (error) {
-    console.error(error);
+    console.error("BanUser Error:", error);
     return res.status(500).json({
       error: true,
       message: "Internal server error",
@@ -410,8 +603,60 @@ const BanUser = async (req, res) => {
 
 // unban user
 
+// const UnbanUser = async (req, res) => {
+//   const { customer_ref_no } = req.params;
+//   try {
+//     if (!customer_ref_no) {
+//       return res.status(400).json({
+//         error: true,
+//         message: "Customer reference number is required",
+//       });
+//     }
+
+//     const user = await User.findOne({ customerRef_no: customer_ref_no });
+
+//     if (!user) {
+//       return res.status(404).json({
+//         error: true,
+//         message: "User not found",
+//       });
+//     }
+
+//     if (user.role !== "User") {
+//       return res.status(403).json({
+//         error: true,
+//         message: "Only User can be unbanned",
+//       });
+//     }
+
+//     const updatedUser = await User.findOneAndUpdate(
+//       { customerRef_no: customer_ref_no },
+//       {
+//         isBanned: {
+//           status: false,
+//           reason: null,
+//           bannedUntil: null,
+//         },
+//       },
+//       { new: true }
+//     );
+
+//     return res.status(200).json({
+//       error: false,
+//       message: "User has been unbanned",
+//       data: updatedUser,
+//     });
+//   } catch (error) {
+//     return res.status(500).json({
+//       error: true,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
 const UnbanUser = async (req, res) => {
   const { customer_ref_no } = req.params;
+
   try {
     if (!customer_ref_no) {
       return res.status(400).json({
@@ -423,37 +668,36 @@ const UnbanUser = async (req, res) => {
     const user = await User.findOne({ customerRef_no: customer_ref_no });
 
     if (!user) {
-      return res.status(404).json({
-        error: true,
-        message: "User not found",
-      });
+      return res.status(404).json({ error: true, message: "User not found" });
     }
 
     if (user.role !== "User") {
-      return res.status(403).json({
-        error: true,
-        message: "Only User can be unbanned",
-      });
+      return res
+        .status(403)
+        .json({ error: true, message: "Only Users can be unbanned" });
     }
 
-    const updatedUser = await User.findOneAndUpdate(
-      { customerRef_no: customer_ref_no },
-      {
-        isBanned: {
-          status: false,
-          reason: null,
-          bannedUntil: null,
-        },
-      },
-      { new: true }
-    );
+    user.isBanned = {
+      status: false,
+      reason: null,
+      bannedUntil: null,
+    };
+
+    user.banHistory.push({
+      action: "unban",
+      reason: "Manual or automatic unban",
+      performedBy: req.user?._id || null,
+    });
+
+    await user.save();
 
     return res.status(200).json({
       error: false,
       message: "User has been unbanned",
-      data: updatedUser,
+      data: user,
     });
   } catch (error) {
+    console.error("UnbanUser Error:", error);
     return res.status(500).json({
       error: true,
       message: "Internal server error",
@@ -843,7 +1087,8 @@ const AddFeedBack = async (req, res) => {
     if (!type || !message || !group || !customerRef_no) {
       return res.status(400).json({
         error: true,
-        message: "Missing required fields: type, message, group, or customerRef_no",
+        message:
+          "Missing required fields: type, message, group, or customerRef_no",
       });
     }
 
@@ -861,7 +1106,6 @@ const AddFeedBack = async (req, res) => {
       message: "Feedback submitted successfully",
       data: feedback,
     });
-
   } catch (error) {
     console.error("Error submitting feedback:", error);
     return res.status(500).json({
@@ -904,6 +1148,8 @@ const GetFeedbacklist = async (req, res) => {
   }
 };
 
+// get all feedbacks
+
 const GetAllFeedbacks = async (req, res) => {
   try {
     const feedbacks = await Feedback.find()
@@ -931,7 +1177,6 @@ const GetAllFeedbacks = async (req, res) => {
     });
   }
 };
-
 
 // get gorup list
 const GetGroupListOfUser = async (req, res) => {
@@ -969,52 +1214,143 @@ const GetGroupListOfUser = async (req, res) => {
 // chat message
 
 const GetChatHistory = async (req, res) => {
-  const { groupId } = req.params;
+  const { roomId } = req.params;
   try {
-    const messages = await ChatMessage.find({ session: groupId })
+    const messages = await ChatMessage.find({ room: roomId })
       .populate("sender", "name email")
       .sort({ sentAt: 1 })
       .lean();
 
-    // Transform the data to match client expectations
-    const formattedMessages = messages.map(msg => ({
+    const formattedMessages = messages.map((msg) => ({
       _id: msg._id,
-      sessionId: msg.session,
+      room: msg.room,
       message: msg.message,
       sentAt: msg.sentAt,
       sender: {
         _id: msg.sender._id,
         name: msg.sender.name,
-        email: msg.sender.email
-      }
+        email: msg.sender.email,
+      },
     }));
 
-    res.status(200).json({ success: true, messages: formattedMessages });
+    return res.status(200).json({ success: true, messages: formattedMessages });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, error: "Server error" });
   }
 };
 
-
 // check gorup info
 const GetGroupInfo = async (req, res) => {
-  const { groupId } = req.params;
+  const { roomId } = req.params;
 
   try {
-    const group = await Group.findById({ groupId }).populate(
-      "users",
-      "name email"
-    );
-    console.log("groups check", group);
-    if (!group) {
+    console.log("room Id in controller", roomId);
+    const room = await Room.findById(roomId).populate("users", "name email");
+    console.log("groups check", room);
+    if (!room) {
       return res.status(404).json({ success: false, error: "Group not found" });
     }
 
-    res.status(200).json({ success: true, group });
+    res.status(200).json({ success: true, room });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, error: "Server error" });
+  }
+};
+
+// create room
+
+const Createroom = async (req, res) => {
+  const { roomId, roomName, groupId, userId } = req.body;
+
+  try {
+    const group = await Group.findById(groupId);
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    const alreadyExists = await Room.findOne({ roomId });
+    if (alreadyExists)
+      return res.status(400).json({ error: "Room ID already exists" });
+
+    const room = new Room({
+      roomId,
+      roomName,
+      group: groupId,
+      users: [userId],
+    });
+
+    await room.save();
+    res.status(201).json({ message: "Room created", room });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+// const all rooms data
+
+const GetallRooms = async (req, res) => {
+  try {
+    const rooms = await Room.find()
+      .populate("group", "groupname groupId")
+      .populate("users", "name email");
+
+    res.status(200).json({
+      error: false,
+      message: "Room list",
+      data: rooms,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: true,
+      message: "Internal server error",
+    });
+  }
+};
+
+// get room specific group
+
+const GetRoomsofAnyGroup = async (req, res) => {
+  const { groupId } = req.params;
+  try {
+    const group = await Group.findById(groupId);
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    const rooms = await Room.find({ group: groupId });
+
+    res.status(200).json({
+      error: false,
+      message: "Room lisr of group",
+      data: rooms,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: true,
+      message: "Internal server error",
+    });
+  }
+};
+
+// get rooms of any user
+
+const GetRoomsofAnyUser = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const rooms = await Room.find({ users: userId }).populate(
+      "group",
+      "groupname groupId"
+    );
+
+    res.status(200).json({
+      error: false,
+      message: "Room list of user",
+      data: rooms,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: true,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -1043,5 +1379,10 @@ module.exports = {
   GetGroupListOfUser,
   GetChatHistory,
   GetGroupInfo,
-    GetAllFeedbacks
+  GetAllFeedbacks,
+  Createroom,
+  GetRoomsofAnyUser,
+  GetRoomsofAnyGroup,
+  GetallRooms,
+  GetBanHistory,
 };
