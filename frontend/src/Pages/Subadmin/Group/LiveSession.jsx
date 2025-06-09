@@ -23,6 +23,10 @@ import {
   Stack,
   Tooltip,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import {
   Send,
@@ -33,6 +37,8 @@ import {
   AttachFile,
   Videocam,
   Mic,
+  Call,
+  CallEnd,
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 
@@ -66,7 +72,6 @@ const MessageBubble = styled(Box)(({ theme, own }) => ({
 
 const LiveSession = () => {
   const { roomId } = useParams();
-  console.log("room id is live session", roomId);
   const accessToken = sessionStorage.getItem("accessToken");
   const navigate = useNavigate();
   const theme = useTheme();
@@ -78,10 +83,72 @@ const LiveSession = () => {
   const [groupInfo, setGroupInfo] = useState(null);
   const messagesEndRef = useRef(null);
 
+  // Audio call states
+  const [isCallActive, setIsCallActive] = useState(false);
+  const [incomingCall, setIncomingCall] = useState(null);
+  const [localStream, setLocalStream] = useState(null);
+  const [remoteStream, setRemoteStream] = useState(null);
+  const [peerConnection, setPeerConnection] = useState(null);
+  const localAudioRef = useRef(null);
+  const remoteAudioRef = useRef(null);
+
   const decodedToken = jwtDecode(accessToken);
   const userId = decodedToken.id;
   const userName = sessionStorage.getItem("userName");
   const userEmail = sessionStorage.getItem("userEmail");
+
+  // Initialize WebRTC
+  const setupWebRTC = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setLocalStream(stream);
+      if (localAudioRef.current) {
+        localAudioRef.current.srcObject = stream;
+      }
+
+      const configuration = {
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+        ],
+      };
+      const pc = new RTCPeerConnection(configuration);
+      setPeerConnection(pc);
+
+      // Add local stream to peer connection
+      stream.getTracks().forEach((track) => {
+        pc.addTrack(track, stream);
+      });
+
+      // Handle remote stream
+      pc.ontrack = (event) => {
+        const remoteStream = new MediaStream();
+        event.streams[0].getTracks().forEach((track) => {
+          remoteStream.addTrack(track);
+        });
+        setRemoteStream(remoteStream);
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+        }
+      };
+
+      // ICE Candidate handler
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit("audio-ice-candidate", {
+            roomId,
+            candidate: event.candidate,
+            senderId: userId,
+          });
+        }
+      };
+
+      return pc;
+    } catch (error) {
+      console.error("Error setting up WebRTC:", error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     const newSocket = io("http://localhost:4000", {
@@ -96,26 +163,25 @@ const LiveSession = () => {
       try {
         // Fetch group info
         const groupRes = await axios.get(
-          `https://grandurenet-main.onrender.com/api/user/room/${roomId}`,
+          `http://localhost:4000/api/user/room/${roomId}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
           }
         );
-        console.log("Room infor", groupRes);
         setGroupInfo(groupRes.data.room);
 
         // Fetch chat history
         const chatRes = await axios.get(
-          `https://grandurenet-main.onrender.com/api/user/chat-history/${roomId}`,
+          `http://localhost:4000/api/user/chat-history/${roomId}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
           }
         );
-console.log("chat history api response",chatRes);
+
         if (chatRes.data.success) {
           const formattedMessages = chatRes.data.messages.map((msg) => ({
             ...msg,
@@ -159,14 +225,104 @@ console.log("chat history api response",chatRes);
       setOnlineUsers(users);
     });
 
+    // Audio call handlers
+    newSocket.on("audio-offer", async ({ offer, senderId }) => {
+      if (isCallActive) return; // Already in a call
+      
+      setIncomingCall({ offer, senderId });
+    });
+
+    newSocket.on("audio-answer", async ({ answer, senderId }) => {
+      if (peerConnection) {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+      }
+    });
+
+    newSocket.on("audio-ice-candidate", ({ candidate, senderId }) => {
+      if (peerConnection) {
+        peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+      }
+    });
+
     return () => {
       newSocket.disconnect();
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
     };
   }, [roomId, userId, accessToken]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Handle call initiation
+  const startCall = async () => {
+    const pc = await setupWebRTC();
+    if (!pc || !socket) return;
+
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      socket.emit("audio-offer", {
+        roomId,
+        offer,
+        senderId: userId,
+      });
+
+      setIsCallActive(true);
+    } catch (error) {
+      console.error("Error starting call:", error);
+    }
+  };
+
+  // Handle accepting incoming call
+  const acceptCall = async () => {
+    if (!incomingCall) return;
+    
+    const pc = await setupWebRTC();
+    if (!pc || !socket) return;
+
+    try {
+      await pc.setRemoteDescription(new RTCSessionDescription(incomingCall.offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      socket.emit("audio-answer", {
+        roomId,
+        answer,
+        senderId: userId,
+      });
+
+      setIsCallActive(true);
+      setIncomingCall(null);
+    } catch (error) {
+      console.error("Error accepting call:", error);
+    }
+  };
+
+  // Handle rejecting incoming call
+  const rejectCall = () => {
+    setIncomingCall(null);
+  };
+
+  // Handle ending call
+  const endCall = () => {
+    if (peerConnection) {
+      peerConnection.close();
+      setPeerConnection(null);
+    }
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      setLocalStream(null);
+    }
+    if (remoteStream) {
+      remoteStream.getTracks().forEach(track => track.stop());
+      setRemoteStream(null);
+    }
+    setIsCallActive(false);
+  };
 
   const handleSendMessage = () => {
     if (newMessage.trim() === "") return;
@@ -266,9 +422,33 @@ console.log("chat history api response",chatRes);
           </Stack>
 
           <Stack direction="row" spacing={1}>
-          
+            {!isCallActive && (
+              <Tooltip title="Start Audio Call">
+                <IconButton
+                  onClick={startCall}
+                  sx={{ color: "common.white" }}
+                  disabled={onlineUsers.length < 2}
+                >
+                  <Call />
+                </IconButton>
+              </Tooltip>
+            )}
+            {isCallActive && (
+              <Tooltip title="End Call">
+                <IconButton
+                  onClick={endCall}
+                  sx={{ color: "error.main", bgcolor: "common.white" }}
+                >
+                  <CallEnd />
+                </IconButton>
+              </Tooltip>
+            )}
           </Stack>
         </GradientAppBar>
+
+        {/* Audio elements (hidden) */}
+        <audio ref={localAudioRef} autoPlay muted />
+        <audio ref={remoteAudioRef} autoPlay />
 
         {/* Messages area */}
         <Box
@@ -409,20 +589,6 @@ console.log("chat history api response",chatRes);
             bgcolor: "background.paper",
           }}
         >
-          {/* <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-            <IconButton size="small">
-              <AttachFile />
-            </IconButton>
-            <IconButton size="small">
-              <EmojiEmotions />
-            </IconButton>
-            <IconButton size="small">
-              <Videocam />
-            </IconButton>
-            <IconButton size="small">
-              <Mic />
-            </IconButton>
-          </Stack> */}
           <Box display="flex" alignItems="center">
             <TextField
               fullWidth
@@ -458,6 +624,24 @@ console.log("chat history api response",chatRes);
           </Box>
         </Box>
       </Paper>
+
+      {/* Incoming Call Dialog */}
+      <Dialog open={!!incomingCall} onClose={rejectCall}>
+        <DialogTitle>Incoming Audio Call</DialogTitle>
+        <DialogContent>
+          <Typography>
+            {onlineUsers.find(u => u._id === incomingCall?.senderId)?.name || "Someone"} is calling...
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={rejectCall} color="error" startIcon={<CallEnd />}>
+            Reject
+          </Button>
+          <Button onClick={acceptCall} color="primary" startIcon={<Call />}>
+            Accept
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
