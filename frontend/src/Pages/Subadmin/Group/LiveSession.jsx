@@ -151,7 +151,7 @@ const LiveSession = () => {
   };
 
   useEffect(() => {
-    const newSocket = io("http://localhost:4000", {
+    const newSocket = io("https://grandurenet-main.onrender.com", {
       auth: {
         token: accessToken,
       },
@@ -163,7 +163,7 @@ const LiveSession = () => {
       try {
         // Fetch group info
         const groupRes = await axios.get(
-          `http://localhost:4000/api/user/room/${roomId}`,
+          `https://grandurenet-main.onrender.com/api/user/room/${roomId}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -174,7 +174,7 @@ const LiveSession = () => {
 
         // Fetch chat history
         const chatRes = await axios.get(
-          `http://localhost:4000/api/user/chat-history/${roomId}`,
+          `https://grandurenet-main.onrender.com/api/user/chat-history/${roomId}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
