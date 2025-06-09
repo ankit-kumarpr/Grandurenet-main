@@ -27,7 +27,12 @@ const {
     GetGroupListOfUser,
     GetChatHistory,
     GetGroupInfo,
-      GetAllFeedbacks
+    GetAllFeedbacks,
+    GetRoomsofAnyUser,
+      GetRoomsofAnyGroup,
+      GetallRooms,
+      GetBanHistory,
+Createroom
 }=require('../Controller/SuperadminController');
 
 
@@ -43,6 +48,10 @@ const {
     router.put('/userban/:customer_ref_no',auth, role(["SuperAdmin"]), BanUser);
     router.put('/unbanuser/:customer_ref_no',auth, role(["SuperAdmin"]), UnbanUser);
 
+
+    // ban hoistory routes
+    router.get('/adminbanhistory/:customer_ref_no',GetBanHistory);
+
     // group routes
 
     router.post('/create-group',auth, role(["SuperAdmin","Admin"]), createGroup);
@@ -52,7 +61,7 @@ const {
     router.post('/assigngroup/:adminId',auth, role(["SuperAdmin"]), AssignGroupsToAdmin);
     router.get('/admingroups',auth,  GetGroupListOfAdmin);
     router.get("/getusergroup",auth, GetGroupListOfUser);
-    router.get('group/:groupId',auth, GetGroupInfo);
+    router.get('/room/:roomId',auth, GetGroupInfo);
 
 
     // live session and chat routes
@@ -60,12 +69,18 @@ const {
     router.post('/createlivesession',auth, role(["SuperAdmin","Admin"]), CreateLiveSession);
     router.get('/getlivesession/:groupId',GetLivesessionByGroupId);
     router.get('/livesession-userId/:customerRef_no',GetLiveSessionByUserId);
-    router.get("/chat-history/:groupId",auth, GetChatHistory);
+    router.get("/chat-history/:roomId",auth, GetChatHistory);
 
     // feedback routes
 
     router.post('/submitfeedback',auth, AddFeedBack);
     router.get('/getfeedbacks/type/:type/date/:date/user/:userId',auth, role(["SuperAdmin","Admin"]), GetFeedbacklist);
-router.get('/feedbacks',auth, role(["SuperAdmin"]),GetAllFeedbacks)
+    router.get('/feedbacks',auth, role(["SuperAdmin"]),GetAllFeedbacks)
+
+
+    // room routes
+
+    router.post('/createroom',Createroom);
+    router.get('/room-group/:groupId',GetRoomsofAnyGroup);
 
     module.exports=router;
