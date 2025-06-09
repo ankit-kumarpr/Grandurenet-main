@@ -22,20 +22,11 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 const RegisterUser = () => {
   const accessToken = sessionStorage.getItem('accessToken');
-//   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     gender: '',
-    
-    Address: {
-      addressline1: '',
-      addressline2: '',
-      city: '',
-      state: '',
-      zip: ''
-    }
   });
   const [errors, setErrors] = useState({});
   const [snackbar, setSnackbar] = useState({
@@ -46,22 +37,10 @@ const RegisterUser = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
-    if (name.includes('Address.')) {
-      const addressField = name.split('.')[1];
-      setFormData(prev => ({
-        ...prev,
-        Address: {
-          ...prev.Address,
-          [addressField]: value
-        }
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const validate = () => {
@@ -87,24 +66,6 @@ const RegisterUser = () => {
     // Gender validation
     if (!formData.gender) newErrors.gender = 'Gender is required';
     
-    
-    
-    // Address validation
-    if (!formData.Address.addressline1.trim()) {
-      newErrors.addressline1 = 'Address Line 1 is required';
-    }
-    if (!formData.Address.city.trim()) {
-      newErrors.city = 'City is required';
-    }
-    if (!formData.Address.state.trim()) {
-      newErrors.state = 'State is required';
-    }
-    if (!formData.Address.zip.trim()) {
-      newErrors.zip = 'ZIP is required';
-    } else if (!/^[0-9]{6}$/.test(formData.Address.zip)) {
-      newErrors.zip = 'ZIP must be 6 digits';
-    }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -115,7 +76,7 @@ const RegisterUser = () => {
     if (validate()) {
       try {
         const response = await axios.post(
-          'https://grandurenet-main.onrender.com/api/user/userresgister',
+          'http://localhost:4000/api/user/userresgister',
           formData,
           {
             headers: {
@@ -137,14 +98,6 @@ const RegisterUser = () => {
           email: '',
           phone: '',
           gender: '',
-          
-          Address: {
-            addressline1: '',
-            addressline2: '',
-            city: '',
-            state: '',
-            zip: ''
-          }
         });
         
       } catch (error) {
@@ -158,13 +111,11 @@ const RegisterUser = () => {
     }
   };
 
-  const handleNumericInput = (e, field) => {
+  const handleNumericInput = (e) => {
     const re = /^[0-9\b]+$/;
     if (e.target.value === '' || re.test(e.target.value)) {
-      if (field === 'phone' && e.target.value.length <= 10) {
+      if (e.target.value.length <= 10) {
         handleChange({ target: { name: 'phone', value: e.target.value } });
-      } else if (field === 'zip' && e.target.value.length <= 6) {
-        handleChange({ target: { name: 'Address.zip', value: e.target.value } });
       }
     }
   };
@@ -176,224 +127,126 @@ const RegisterUser = () => {
   return (
     <>
       <PageTitle page={"Register User"} />
-      {/* <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}> */}
-        <Paper elevation={3} sx={{ 
-          p: 4,
-          borderRadius: 3,
-          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)'
-        }}>
-       
+      <Paper elevation={3} sx={{ 
+        p: 4,
+        borderRadius: 3,
+        boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)'
+      }}>
+        <form onSubmit={handleSubmit}>
+          {/* Personal Information */}
+          <Typography 
+            variant="h6" 
+            gutterBottom 
+            sx={{ 
+              mt: 2, 
+              mb: 3,
+              color: 'text.secondary',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              pb: 1
+            }}
+          >
+            Personal Information
+          </Typography>
           
-          <form onSubmit={handleSubmit}>
-            {/* Personal Information */}
-            <Typography 
-              variant="h6" 
-              gutterBottom 
-              sx={{ 
-                mt: 2, 
-                mb: 3,
-                color: 'text.secondary',
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-                pb: 1
-              }}
-            >
-              Personal Information
-            </Typography>
-            
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  id="name"
-                  name="name"
-                  label="Full Name"
-                  variant="outlined"
-                  value={formData.name}
-                  onChange={handleChange}
-                  error={!!errors.name}
-                  helperText={errors.name}
-                  sx={{ backgroundColor: 'background.paper' }}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  id="email"
-                  name="email"
-                  label="Email"
-                  type="email"
-                  variant="outlined"
-                  value={formData.email}
-                  onChange={handleChange}
-                  error={!!errors.email}
-                  helperText={errors.email}
-                  sx={{ backgroundColor: 'background.paper' }}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  id="phone"
-                  name="phone"
-                  label="Phone Number"
-                  variant="outlined"
-                  value={formData.phone}
-                  onChange={(e) => handleNumericInput(e, 'phone')}
-                  error={!!errors.phone}
-                  helperText={errors.phone}
-                  inputProps={{ maxLength: 10 }}
-                  sx={{ backgroundColor: 'background.paper' }}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth error={!!errors.gender}>
-                  <InputLabel id="gender-label">Gender</InputLabel>
-                  <Select
-                    labelId="gender-label"
-                    id="gender"
-                    name="gender"
-                    value={formData.gender}
-                    label="Gender"
-                    onChange={handleChange}
-                    variant="outlined"
-                    sx={{ backgroundColor: 'background.paper' }}
-                  >
-                    <MenuItem value="Male">Male</MenuItem>
-                    <MenuItem value="Female">Female</MenuItem>
-                    <MenuItem value="Other">Other</MenuItem>
-                  </Select>
-                  {errors.gender && (
-                    <Typography variant="caption" color="error" sx={{ ml: 2 }}>
-                      {errors.gender}
-                    </Typography>
-                  )}
-                </FormControl>
-              </Grid>
-              
-            
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                id="name"
+                name="name"
+                label="Full Name"
+                variant="outlined"
+                value={formData.name}
+                onChange={handleChange}
+                error={!!errors.name}
+                helperText={errors.name}
+                sx={{ backgroundColor: 'background.paper' }}
+              />
             </Grid>
             
-            {/* Address Information */}
-            <Typography 
-              variant="h6" 
-              gutterBottom 
-              sx={{ 
-                mt: 4, 
-                mb: 3,
-                color: 'text.secondary',
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-                pb: 1
-              }}
-            >
-              Address Information
-            </Typography>
-            
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  id="addressline1"
-                  name="Address.addressline1"
-                  label="Address Line 1"
-                  variant="outlined"
-                  value={formData.Address.addressline1}
-                  onChange={handleChange}
-                  error={!!errors.addressline1}
-                  helperText={errors.addressline1}
-                  sx={{ backgroundColor: 'background.paper' }}
-                />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  id="addressline2"
-                  name="Address.addressline2"
-                  label="Address Line 2 (Optional)"
-                  variant="outlined"
-                  value={formData.Address.addressline2}
-                  onChange={handleChange}
-                  sx={{ backgroundColor: 'background.paper' }}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  id="city"
-                  name="Address.city"
-                  label="City"
-                  variant="outlined"
-                  value={formData.Address.city}
-                  onChange={handleChange}
-                  error={!!errors.city}
-                  helperText={errors.city}
-                  sx={{ backgroundColor: 'background.paper' }}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  id="state"
-                  name="Address.state"
-                  label="State"
-                  variant="outlined"
-                  value={formData.Address.state}
-                  onChange={handleChange}
-                  error={!!errors.state}
-                  helperText={errors.state}
-                  sx={{ backgroundColor: 'background.paper' }}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  id="zip"
-                  name="Address.zip"
-                  label="ZIP Code"
-                  variant="outlined"
-                  value={formData.Address.zip}
-                  onChange={(e) => handleNumericInput(e, 'zip')}
-                  error={!!errors.zip}
-                  helperText={errors.zip}
-                  inputProps={{ maxLength: 6 }}
-                  sx={{ backgroundColor: 'background.paper' }}
-                />
-              </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                id="email"
+                name="email"
+                label="Email"
+                type="email"
+                variant="outlined"
+                value={formData.email}
+                onChange={handleChange}
+                error={!!errors.email}
+                helperText={errors.email}
+                sx={{ backgroundColor: 'background.paper' }}
+              />
             </Grid>
             
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'flex-end', 
-              mt: 4,
-              gap: 2
-            }}>
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                sx={{ 
-                  px: 6, 
-                  py: 1.5,
-                  fontWeight: 'bold',
-                  textTransform: 'none',
-                  fontSize: '1rem',
-                  borderRadius: 2
-                }}
-              >
-                Register User
-              </Button>
-            </Box>
-          </form>
-        </Paper>
-      {/* </Container> */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                id="phone"
+                name="phone"
+                label="Phone Number"
+                variant="outlined"
+                value={formData.phone}
+                onChange={handleNumericInput}
+                error={!!errors.phone}
+                helperText={errors.phone}
+                inputProps={{ maxLength: 10 }}
+                sx={{ backgroundColor: 'background.paper' }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth error={!!errors.gender}>
+                <InputLabel id="gender-label">Gender</InputLabel>
+                <Select
+                  labelId="gender-label"
+                  id="gender"
+                  name="gender"
+                  value={formData.gender}
+                  label="Gender"
+                  onChange={handleChange}
+                  variant="outlined"
+                  sx={{ backgroundColor: 'background.paper' }}
+                >
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
+                </Select>
+                {errors.gender && (
+                  <Typography variant="caption" color="error" sx={{ ml: 2 }}>
+                    {errors.gender}
+                  </Typography>
+                )}
+              </FormControl>
+            </Grid>
+          </Grid>
+          
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            mt: 4,
+            gap: 2
+          }}>
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              sx={{ 
+                px: 6, 
+                py: 1.5,
+                fontWeight: 'bold',
+                textTransform: 'none',
+                fontSize: '1rem',
+                borderRadius: 2
+              }}
+            >
+              Register User
+            </Button>
+          </Box>
+        </form>
+      </Paper>
 
       <Snackbar
         open={snackbar.open}
