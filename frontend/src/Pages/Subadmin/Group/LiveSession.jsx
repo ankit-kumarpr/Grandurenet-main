@@ -96,7 +96,7 @@ const LiveSession = () => {
       try {
         // Fetch group info
         const groupRes = await axios.get(
-          `http://localhost:4000/api/user/room/${roomId}`,
+          `https://grandurenet-main.onrender.com/api/user/room/${roomId}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -108,7 +108,7 @@ const LiveSession = () => {
 
         // Fetch chat history
         const chatRes = await axios.get(
-          `http://localhost:4000/api/user/chat-history/${roomId}`,
+          `https://grandurenet-main.onrender.com/api/user/chat-history/${roomId}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
