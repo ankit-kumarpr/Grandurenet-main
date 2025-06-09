@@ -83,7 +83,7 @@ const SelfGroupList = () => {
   const GetYourgroupsList = async () => {
     try {
       setLoading(true);
-      const url = `http://localhost:4000/api/user/admingroups`;
+      const url = `https://grandurenet-main.onrender.com/api/user/admingroups`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -130,7 +130,7 @@ const SelfGroupList = () => {
     try {
       if (!selectedGroup || !roomData.roomId || !roomData.roomName) return;
       
-      const url = `http://localhost:4000/api/user/createroom`;
+      const url = `https://grandurenet-main.onrender.com/api/user/createroom`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -163,7 +163,7 @@ const SelfGroupList = () => {
   const getRoomList = async (groupId) => {
     try {
       setRoomsLoading(prev => ({ ...prev, [groupId]: true }));
-      const url = `http://localhost:4000/api/user/room-group/${groupId}`;
+      const url = `https://grandurenet-main.onrender.com/api/user/room-group/${groupId}`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
