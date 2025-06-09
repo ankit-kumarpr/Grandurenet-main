@@ -129,6 +129,9 @@ const SelfGroupList = () => {
   const CreateRoomForGroup = async () => {
     try {
       if (!selectedGroup || !roomData.roomId || !roomData.roomName) return;
+      console.log("Selected group",selectedGroup);
+      console.log("room Id",roomData.roomId);
+      console.log("room Name",roomName);
       
       const url = `https://grandurenet-main.onrender.com/api/user/createroom`;
       const headers = {
@@ -145,7 +148,7 @@ const SelfGroupList = () => {
         groupId: selectedGroup._id,
         userId: userIds
       };
-
+console.log("Request Body of create group",payload);
       const response = await axios.post(url, payload, { headers });
       console.log("Response of the create room", response.data);
       
