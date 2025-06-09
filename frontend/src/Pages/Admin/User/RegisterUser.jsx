@@ -76,7 +76,7 @@ const RegisterUser = () => {
     if (validate()) {
       try {
         const response = await axios.post(
-          'http://localhost:4000/api/user/userresgister',
+          'https://grandurenet-main.onrender.com/api/user/userresgister',
           formData,
           {
             headers: {
