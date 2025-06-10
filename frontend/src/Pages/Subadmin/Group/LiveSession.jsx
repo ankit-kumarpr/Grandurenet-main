@@ -460,8 +460,10 @@ console.log("room id outside",roomId);
         </GradientAppBar>
 
         {/* Audio elements (hidden) */}
-        <audio ref={localAudioRef} autoPlay muted />
-        <audio ref={remoteAudioRef} autoPlay />
+
+          
+   <audio ref={localAudioRef} autoPlay muted playsInline></audio>
+<audio ref={remoteAudioRef} autoPlay playsInline></audio>
 
         {/* Messages area */}
         <Box
