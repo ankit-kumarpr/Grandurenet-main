@@ -32,11 +32,12 @@ const {
       GetRoomsofAnyGroup,
       GetallRooms,
       GetBanHistory,
+    getUserProfile
 Createroom
 }=require('../Controller/SuperadminController');
 
 
-
+router.get('/profile/:userId',auth, getUserProfile);
     router.post('/adminregister', auth, role(["SuperAdmin"]), ResgisterAdmin);
     router.post('/userresgister',ResgiterUser);
     router.get('/getalladmin',auth, role(["SuperAdmin","Admin"]), GetallAdmin);
