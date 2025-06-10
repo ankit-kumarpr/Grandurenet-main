@@ -99,58 +99,68 @@ const LiveSession = () => {
   const userEmail = sessionStorage.getItem("userEmail");
 
   // Initialize WebRTC
-  const setupWebRTC = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setLocalStream(stream);
-      if (localAudioRef.current) {
-        localAudioRef.current.srcObject = stream;
-      }
+const setupWebRTC = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    setLocalStream(stream);
 
-      const configuration = {
-        iceServers: [
-          { urls: "stun:stun.l.google.com:19302" },
-          { urls: "stun:stun1.l.google.com:19302" },
-        ],
-      };
-      const pc = new RTCPeerConnection(configuration);
-      setPeerConnection(pc);
+    if (localAudioRef.current) {
+      localAudioRef.current.srcObject = stream;
+    }
 
-      // Add local stream to peer connection
-      stream.getTracks().forEach((track) => {
-        pc.addTrack(track, stream);
+    const configuration = {
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        // Optional TURN server for production:
+        { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+      ],
+    };
+
+    const pc = new RTCPeerConnection(configuration);
+    setPeerConnection(pc);
+
+    // Add local tracks
+    stream.getTracks().forEach((track) => {
+      pc.addTrack(track, stream);
+    });
+
+    // Create remote stream once
+    const remoteStream = new MediaStream();
+    setRemoteStream(remoteStream);
+
+    pc.ontrack = (event) => {
+      event.streams[0].getTracks().forEach((track) => {
+        // Only add track if not already in remoteStream
+        if (!remoteStream.getTracks().some(t => t.id === track.id)) {
+          remoteStream.addTrack(track);
+        }
       });
 
-      // Handle remote stream
-      pc.ontrack = (event) => {
-        const remoteStream = new MediaStream();
-        event.streams[0].getTracks().forEach((track) => {
-          remoteStream.addTrack(track);
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = remoteStream;
+      }
+    };
+
+    // ICE Candidate handler
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit("audio-ice-candidate", {
+          roomId,
+          candidate: event.candidate,
+          senderId: userId,
         });
-        setRemoteStream(remoteStream);
-        if (remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = remoteStream;
-        }
-      };
+      }
+    };
 
-      // ICE Candidate handler
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          socket.emit("audio-ice-candidate", {
-            roomId,
-            candidate: event.candidate,
-            senderId: userId,
-          });
-        }
-      };
+    return pc;
+  } catch (error) {
+    console.error("Error setting up WebRTC:", error);
+    return null;
+  }
+};
 
-      return pc;
-    } catch (error) {
-      console.error("Error setting up WebRTC:", error);
-      return null;
-    }
-  };
-
+  
   useEffect(() => {
     const newSocket = io("https://grandurenet-main.onrender.com", {
       auth: {
