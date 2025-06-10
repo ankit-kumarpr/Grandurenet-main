@@ -12,20 +12,37 @@ import {
   FormControl,
   InputLabel,
   Typography,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import Swal from 'sweetalert2';
-import { Block, Circle, CheckCircle } from "@mui/icons-material";
+import { Block, Circle, CheckCircle, Add } from "@mui/icons-material";
 
 const SubAdminList = () => {
   const [adminData, setAdminData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openBanModal, setOpenBanModal] = useState(false);
+  const [openAddAdminModal, setOpenAddAdminModal] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [banReason, setBanReason] = useState("");
   const [banType, setBanType] = useState("temporary");
   const [bannedUntil, setBannedUntil] = useState("");
   const [filterStatus, setFilterStatus] = useState("unbanned");
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
   const accesstoken = sessionStorage.getItem("accessToken");
+
+  // Add Admin Form State
+  const [adminForm, setAdminForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    gender: '',
+  });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     GetAdminData();
@@ -34,7 +51,7 @@ const SubAdminList = () => {
   const GetAdminData = async () => {
     try {
       setLoading(true);
-      const url = `https://grandurenet-main.onrender.com/api/user/getalladmin`;
+      const url = `http://localhost:4000/api/user/getalladmin`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -47,7 +64,6 @@ const SubAdminList = () => {
       const transformedData = response.data.data.map((admin, index) => ({
         ...admin,
         srNo: index + 1,
-  
         formattedDate: admin.createdAt
           ? new Date(admin.createdAt).toLocaleString()
           : "N/A",
@@ -75,9 +91,24 @@ const SubAdminList = () => {
     setSelectedAdmin(null);
   };
 
+  const handleOpenAddAdminModal = () => {
+    setOpenAddAdminModal(true);
+  };
+
+  const handleCloseAddAdminModal = () => {
+    setOpenAddAdminModal(false);
+    setAdminForm({
+      name: '',
+      email: '',
+      phone: '',
+      gender: '',
+    });
+    setErrors({});
+  };
+
   const BanAdminAPI = async () => {
     try {
-      const url = `https://grandurenet-main.onrender.com/api/user/banadmin/${selectedAdmin._id}`;
+      const url = `http://localhost:4000/api/user/banadmin/${selectedAdmin._id}`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -92,14 +123,13 @@ const SubAdminList = () => {
 
       const response = await axios.put(url, requestBody, { headers });
       console.log("Response of Ban api", response.data);
-if(response.data.error==false){
-     Swal.fire({
+      if(response.data.error==false){
+        Swal.fire({
           title: "Good job!",
           text: "You Admin Ban SuccessFully",
           icon: "success",
         });
-}
-      // Update the local state to reflect the ban
+      }
       setAdminData(
         adminData.map((admin) =>
           admin._id === selectedAdmin._id
@@ -116,7 +146,7 @@ if(response.data.error==false){
 
   const UnbanAdminAPI = async (adminId) => {
     try {
-      const url = `https://grandurenet-main.onrender.com/api/user/unbanadmin/${adminId}`;
+      const url = `http://localhost:4000/api/user/unbanadmin/${adminId}`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -132,7 +162,6 @@ if(response.data.error==false){
           icon: "success",
         });
       }
-      // Update the local state to reflect the unban
       setAdminData(
         adminData.map((admin) =>
           admin._id === adminId ? { ...admin, banStatus: false } : admin
@@ -141,6 +170,83 @@ if(response.data.error==false){
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const validateAdminForm = () => {
+    const newErrors = {};
+    
+    if (!adminForm.name.trim()) newErrors.name = 'Name is required';
+    
+    if (!adminForm.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminForm.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+    
+    if (!adminForm.phone.trim()) {
+      newErrors.phone = 'Phone is required';
+    } else if (!/^[0-9]{10}$/.test(adminForm.phone)) {
+      newErrors.phone = 'Phone must be 10 digits';
+    }
+    
+    if (!adminForm.gender) newErrors.gender = 'Gender is required';
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleAdminFormChange = (e) => {
+    const { name, value } = e.target;
+    setAdminForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handlePhoneInput = (e) => {
+    const re = /^[0-9\b]+$/;
+    if (e.target.value === '' || re.test(e.target.value)) {
+      if (e.target.value.length <= 10) {
+        handleAdminFormChange({ target: { name: 'phone', value: e.target.value } });
+      }
+    }
+  };
+
+  const RegisterAdminAPI = async () => {
+    if (!validateAdminForm()) return;
+
+    try {
+      const url = `http://localhost:4000/api/user/adminregister`;
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${accesstoken}`
+      };
+
+      const response = await axios.post(url, adminForm, { headers });
+      console.log("admin register api", response.data);
+      
+      if (response.data.error === false) {
+        setSnackbar({
+          open: true,
+          message: 'Admin registered successfully!',
+          severity: 'success'
+        });
+        handleCloseAddAdminModal();
+        GetAdminData(); // Refresh the admin list
+      }
+    } catch (error) {
+      console.log(error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || 'Registration failed',
+        severity: 'error'
+      });
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   const filteredAdmins = adminData.filter((admin) => {
@@ -159,7 +265,6 @@ if(response.data.error==false){
     { field: "email", headerName: "Email", width: 200 },
     { field: "phone", headerName: "Phone", width: 130 },
     { field: "gender", headerName: "Gender", width: 100 },
-    // { field: "formattedAddress", headerName: "Address", width: 250 },
     { field: "role", headerName: "Role", width: 100 },
     { field: "formattedDate", headerName: "Created At", width: 180 },
     {
@@ -216,8 +321,17 @@ if(response.data.error==false){
     <>
       <PageTitle page={"Admin List"} />
 
-      {/* Filter Section */}
-      <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
+      {/* Filter and Add Admin Section */}
+      <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between" }}>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<Add />}
+          onClick={handleOpenAddAdminModal}
+        >
+          Add Admin
+        </Button>
+        
         <FormControl variant="outlined" size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Filter by Status</InputLabel>
           <Select
@@ -331,6 +445,123 @@ if(response.data.error==false){
           </Box>
         </Box>
       </Modal>
+
+      {/* Add Admin Modal */}
+      <Modal
+        open={openAddAdminModal}
+        onClose={handleCloseAddAdminModal}
+        aria-labelledby="add-admin-modal"
+        aria-describedby="add-admin-modal-description"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 1,
+          }}
+        >
+          <Typography
+            id="add-admin-modal"
+            variant="h6"
+            component="h2"
+            gutterBottom
+          >
+            Add New Admin
+          </Typography>
+
+          <TextField
+            fullWidth
+            label="Full Name"
+            name="name"
+            value={adminForm.name}
+            onChange={handleAdminFormChange}
+            error={!!errors.name}
+            helperText={errors.name}
+            margin="normal"
+            required
+          />
+
+          <TextField
+            fullWidth
+            label="Email"
+            name="email"
+            type="email"
+            value={adminForm.email}
+            onChange={handleAdminFormChange}
+            error={!!errors.email}
+            helperText={errors.email}
+            margin="normal"
+            required
+          />
+
+          <TextField
+            fullWidth
+            label="Phone Number"
+            name="phone"
+            value={adminForm.phone}
+            onChange={handlePhoneInput}
+            error={!!errors.phone}
+            helperText={errors.phone}
+            margin="normal"
+            inputProps={{ maxLength: 10 }}
+            required
+          />
+
+          <FormControl fullWidth margin="normal" error={!!errors.gender}>
+            <InputLabel>Gender</InputLabel>
+            <Select
+              name="gender"
+              value={adminForm.gender}
+              onChange={handleAdminFormChange}
+              label="Gender"
+              required
+            >
+              <MenuItem value="Male">Male</MenuItem>
+              <MenuItem value="Female">Female</MenuItem>
+              <MenuItem value="Other">Other</MenuItem>
+            </Select>
+            {errors.gender && (
+              <Typography variant="caption" color="error" sx={{ ml: 2 }}>
+                {errors.gender}
+              </Typography>
+            )}
+          </FormControl>
+
+          <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+            <Button onClick={handleCloseAddAdminModal} sx={{ mr: 2 }}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={RegisterAdminAPI}
+            >
+              Register Admin
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
