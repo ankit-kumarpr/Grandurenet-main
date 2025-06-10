@@ -111,6 +111,12 @@ const [loginuserRole, setUserRole] = useState("User");
                     <div style={{ fontSize: '12px' }}>User</div>
                   </Link>
                 </div>
+                <div className="col">
+                  <Link to="/profile" className="btn text-dark">
+                    <img src={UserIcon} alt="Room" style={{ width: '24px', height: '24px' }} />
+                    <div style={{ fontSize: '12px' }}>Me</div>
+                  </Link>
+                </div>
                
               </div>
             </div>
