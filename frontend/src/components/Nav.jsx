@@ -10,7 +10,7 @@ function Nav() {
     <nav className='header-nav ms-auto'>
          <ul className='d-flex align-items-center'>
             
-            <NavAvatar/>
+{/*             <NavAvatar/> */}
          </ul>
     </nav>
   )
