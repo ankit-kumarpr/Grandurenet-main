@@ -32,7 +32,7 @@ const {
       GetRoomsofAnyGroup,
       GetallRooms,
       GetBanHistory,
-    getUserProfile
+    getUserProfile,
 Createroom
 }=require('../Controller/SuperadminController');
 
