@@ -117,7 +117,7 @@ const Login = () => {
       className="img-fluid"
     />
   </div>
-            <div className="form-container">
+            <div className="form-container pt-5">
               <h1 className="get-started-title">Get Started</h1>
               <p className="subtitle">
                 {showOtpInput 
