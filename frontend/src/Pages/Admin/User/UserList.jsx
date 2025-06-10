@@ -12,20 +12,37 @@ import {
   FormControl,
   InputLabel,
   Typography,
+  Snackbar,
+  Alert
 } from "@mui/material";
 import Swal from 'sweetalert2';
-import { Block, Circle, CheckCircle } from "@mui/icons-material";
+import { Block, Circle, CheckCircle, PersonAdd } from "@mui/icons-material";
 
 const UserList = () => {
   const [adminData, setAdminData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openBanModal, setOpenBanModal] = useState(false);
+  const [openAddUserModal, setOpenAddUserModal] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [banReason, setBanReason] = useState("");
   const [banType, setBanType] = useState("temporary");
   const [bannedUntil, setBannedUntil] = useState("");
   const [filterStatus, setFilterStatus] = useState("unbanned");
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
   const accesstoken = sessionStorage.getItem("accessToken");
+
+  // Add User Form State
+  const [userForm, setUserForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    gender: ''
+  });
+  const [formErrors, setFormErrors] = useState({});
 
   useEffect(() => {
     GetuserData();
@@ -34,7 +51,7 @@ const UserList = () => {
   const GetuserData = async () => {
     try {
       setLoading(true);
-      const url = `https://grandurenet-main.onrender.com/api/user/alluserlist`;
+      const url = `http://localhost:4000/api/user/alluserlist`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -81,9 +98,24 @@ const UserList = () => {
     setSelectedAdmin(null);
   };
 
+  const handleOpenAddUserModal = () => {
+    setOpenAddUserModal(true);
+  };
+
+  const handleCloseAddUserModal = () => {
+    setOpenAddUserModal(false);
+    setUserForm({
+      name: '',
+      email: '',
+      phone: '',
+      gender: ''
+    });
+    setFormErrors({});
+  };
+
   const BanAdminAPI = async () => {
     try {
-      const url = `https://grandurenet-main.onrender.com/api/user/userban/${selectedAdmin._id}`;
+      const url = `http://localhost:4000/api/user/userban/${selectedAdmin._id}`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -98,14 +130,13 @@ const UserList = () => {
 
       const response = await axios.put(url, requestBody, { headers });
       console.log("Response of Ban api", response.data);
-if(response.data.error==false){
-     Swal.fire({
+      if(response.data.error==false){
+        Swal.fire({
           title: "Good job!",
           text: "You User Ban SuccessFully",
           icon: "success",
         });
-}
-      // Update the local state to reflect the ban
+      }
       setAdminData(
         adminData.map((admin) =>
           admin._id === selectedAdmin._id
@@ -113,7 +144,6 @@ if(response.data.error==false){
             : admin
         )
       );
-
       handleCloseBanModal();
     } catch (error) {
       console.log(error);
@@ -122,7 +152,7 @@ if(response.data.error==false){
 
   const UnbanAdminAPI = async (adminId) => {
     try {
-      const url = `https://grandurenet-main.onrender.com/api/user/unbanuser/${adminId}`;
+      const url = `http://localhost:4000/api/user/unbanuser/${adminId}`;
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -138,7 +168,6 @@ if(response.data.error==false){
           icon: "success",
         });
       }
-      // Update the local state to reflect the unban
       setAdminData(
         adminData.map((admin) =>
           admin._id === adminId ? { ...admin, banStatus: false } : admin
@@ -146,6 +175,85 @@ if(response.data.error==false){
       );
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!userForm.name.trim()) errors.name = 'Name is required';
+    
+    if (!userForm.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userForm.email)) {
+      errors.email = 'Invalid email format';
+    }
+    
+    if (!userForm.phone.trim()) {
+      errors.phone = 'Phone is required';
+    } else if (!/^[0-9]{10}$/.test(userForm.phone)) {
+      errors.phone = 'Phone must be 10 digits';
+    }
+    
+    if (!userForm.gender) errors.gender = 'Gender is required';
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUserForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handlePhoneInput = (e) => {
+    const re = /^[0-9\b]+$/;
+    if (e.target.value === '' || re.test(e.target.value)) {
+      if (e.target.value.length <= 10) {
+        handleInputChange({ target: { name: 'phone', value: e.target.value } });
+      }
+    }
+  };
+
+  const RegisterUserAPI = async () => {
+    if (!validateForm()) return;
+    
+    try {
+      const url = `http://localhost:4000/api/user/userresgister`;
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${accesstoken}`
+      };
+
+      const response = await axios.post(url, userForm, { headers });
+      console.log("Response of register user", response.data);
+      
+      if (response.data.error === false) {
+        setSnackbar({
+          open: true,
+          message: 'User registered successfully!',
+          severity: 'success'
+        });
+        handleCloseAddUserModal();
+        GetuserData(); // Refresh the user list
+      } else {
+        setSnackbar({
+          open: true,
+          message: response.data.message || 'Registration failed',
+          severity: 'error'
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || 'Registration failed',
+        severity: 'error'
+      });
     }
   };
 
@@ -163,11 +271,8 @@ if(response.data.error==false){
     },
     { field: "customerRef_no", headerName: "UserId", width: 150 },
     { field: "name", headerName: "Name", width: 150 },
-    // { field: "email", headerName: "Email", width: 200 },
     { field: "phone", headerName: "Phone", width: 130 },
     { field: "gender", headerName: "Gender", width: 100 },
-    // { field: "formattedAddress", headerName: "Address", width: 250 },
-    // { field: "role", headerName: "Role", width: 100 },
     { field: "formattedDate", headerName: "Created At", width: 180 },
     {
       field: "banStatus",
@@ -219,12 +324,24 @@ if(response.data.error==false){
     },
   ];
 
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
   return (
     <>
       <PageTitle page={"User List"} />
 
       {/* Filter Section */}
-      <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
+      <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between" }}>
+        <Button
+          variant="contained"
+          startIcon={<PersonAdd />}
+          onClick={handleOpenAddUserModal}
+        >
+          Add User
+        </Button>
+        
         <FormControl variant="outlined" size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Filter by Status</InputLabel>
           <Select
@@ -338,6 +455,123 @@ if(response.data.error==false){
           </Box>
         </Box>
       </Modal>
+
+      {/* Add User Modal */}
+      <Modal
+        open={openAddUserModal}
+        onClose={handleCloseAddUserModal}
+        aria-labelledby="add-user-modal"
+        aria-describedby="add-user-modal-description"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 1,
+          }}
+        >
+          <Typography
+            id="add-user-modal"
+            variant="h6"
+            component="h2"
+            gutterBottom
+          >
+            Add New User
+          </Typography>
+
+          <TextField
+            fullWidth
+            label="Full Name"
+            name="name"
+            value={userForm.name}
+            onChange={handleInputChange}
+            error={!!formErrors.name}
+            helperText={formErrors.name}
+            margin="normal"
+            required
+          />
+
+          <TextField
+            fullWidth
+            label="Email"
+            name="email"
+            type="email"
+            value={userForm.email}
+            onChange={handleInputChange}
+            error={!!formErrors.email}
+            helperText={formErrors.email}
+            margin="normal"
+            required
+          />
+
+          <TextField
+            fullWidth
+            label="Phone Number"
+            name="phone"
+            value={userForm.phone}
+            onChange={handlePhoneInput}
+            error={!!formErrors.phone}
+            helperText={formErrors.phone}
+            margin="normal"
+            inputProps={{ maxLength: 10 }}
+            required
+          />
+
+          <FormControl fullWidth margin="normal" error={!!formErrors.gender}>
+            <InputLabel>Gender</InputLabel>
+            <Select
+              name="gender"
+              value={userForm.gender}
+              label="Gender"
+              onChange={handleInputChange}
+              required
+            >
+              <MenuItem value="Male">Male</MenuItem>
+              <MenuItem value="Female">Female</MenuItem>
+              <MenuItem value="Other">Other</MenuItem>
+            </Select>
+            {formErrors.gender && (
+              <Typography variant="caption" color="error" sx={{ ml: 2 }}>
+                {formErrors.gender}
+              </Typography>
+            )}
+          </FormControl>
+
+          <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+            <Button onClick={handleCloseAddUserModal} sx={{ mr: 2 }}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={RegisterUserAPI}
+            >
+              Register User
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
