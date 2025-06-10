@@ -40,36 +40,22 @@ const SideBar = () => {
                 <span className="nav-heading collapsed">Super Admin Dashboard</span>
               </Link>
             </li>
- <li className="nav-item">
-              <div
-                className="nav-link"
-                onClick={() => toggleDropdown("admin")}
-              >
+            <li className="nav-item">
+              <Link className="nav-link" to="/admins">
                 <GrUserAdmin size={20} />
-                <span className="nav-heading collapsed">Admin</span>
-              </div>
-              {dropdowns.admin && (
-                <ul className="nav-content">
-                  <li className="ps-3">
-                    <Link to="/register-admin" className="nav-link">
-                      <i className="bi bi-circle"></i>
-                      <span className="nav-heading collapsed">
-                        Add Admin
-                      </span>
-                    </Link>
-                  </li>
-                  <li className="ps-3">
-                    <Link to="/admin-list" className="nav-link">
-                      <i className="bi bi-circle"></i>
-                      <span className="nav-heading collapsed">
-                        Admin List
-                      </span>
-                    </Link>
-                  </li>
-                </ul>
-              )}
+                <span className="nav-heading collapsed">Admins</span>
+              </Link>
             </li>
- <li className="nav-item">
+            <li className="nav-item">
+              <Link className="nav-link" to="/users">
+                <FaUsers size={20} />
+                <span className="nav-heading collapsed">Users</span>
+              </Link>
+            </li>
+
+
+
+ {/* <li className="nav-item">
               <div
                 className="nav-link"
                 onClick={() => toggleDropdown("user")}
@@ -97,7 +83,7 @@ const SideBar = () => {
                   </li>
                 </ul>
               )}
-            </li>
+            </li> */}
             <li className="nav-item">
               <Link className="nav-link" to="/assign-group">
                 <FaGroupArrowsRotate size={20} />
