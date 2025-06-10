@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, useLocation, Link } from "react-router-dom";
 import { FaComments, FaDoorOpen, FaUser } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 import Header from "./Header.jsx";
 import SideBar from "./SideBar.jsx";
@@ -8,6 +9,7 @@ import UserIcon from '../images/user.png';
 import messageIcon from '../images/message.png';
 import RoomIcon from '../images/room.png'; 
 import adminIcon from '../images/admin.png'; 
+import logout from '../images/logout.png'; 
 
  import "./main.css";
 
@@ -38,7 +40,12 @@ const Allmain = () => {
 const [loginuserRole, setUserRole] = useState("User");
   
 
+const handleLogout = () => {
 
+  sessionStorage.removeItem('accessToken'); 
+  
+  navigate('/');
+};
 
 
 
@@ -111,12 +118,12 @@ const [loginuserRole, setUserRole] = useState("User");
                     <div style={{ fontSize: '12px' }}>User</div>
                   </Link>
                 </div>
-                <div className="col">
-                  <Link to="/profile" className="btn text-dark">
-                    <img src={UserIcon} alt="Room" style={{ width: '24px', height: '24px' }} />
-                    <div style={{ fontSize: '12px' }}>Me</div>
-                  </Link>
-                </div>
+              <div className="col">
+  <button onClick={handleLogout} className="btn text-dark">
+    <img src={logout} alt="Logout" style={{ width: '24px', height: '24px' }} />
+    <div style={{ fontSize: '12px' }}>Logout</div>
+  </button>
+</div>
                
               </div>
             </div>
