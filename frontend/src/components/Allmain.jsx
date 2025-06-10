@@ -68,10 +68,10 @@ const Allmain = () => {
         <Routes>
           <Route path="/super-admin-dashboard" element={<SuperAdminDashboard />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/register-admin" element={<AdminRegister />} />
-          <Route path="/admin-list" element={<SubAdminList />} />
-          <Route path="/user-register" element={<RegisterUser />} />
-          <Route path="/user-list" element={<UserList />} />
+{/*           <Route path="/register-admin" element={<AdminRegister />} /> */}
+          <Route path="/admins" element={<SubAdminList />} />
+{/*           <Route path="/user-register" element={<RegisterUser />} /> */}
+          <Route path="/users" element={<UserList />} />
           <Route path="/create-group" element={<CreateGroup />} />
           <Route path="/assign-group" element={<AsssignGroupToAdmin />} />
           <Route path="/my-groups" element={<SelfGroupList />} />
