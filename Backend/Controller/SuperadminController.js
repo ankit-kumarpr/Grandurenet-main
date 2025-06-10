@@ -5,6 +5,32 @@ const Feedback = require("../Models/FeedbackModel");
 const ChatMessage = require("../Models/ChatMessage");
 const Room = require("../Models/RoomModel");
 
+// get user profile
+
+const getUserProfile = async (req, res) => {
+  try {
+    const {userId} = req.params;
+    console.log("user id", userId);
+
+    const user = await User.findById(userId)
+      .populate("createdBy", "name email")
+      .populate("groups", "groupname");
+    console.log("user", user);
+    if (!user || user.is_deleted) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      profile: user,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
 //  resgiter admin
 
 const ResgisterAdmin = async (req, res) => {
@@ -1385,4 +1411,5 @@ module.exports = {
   GetRoomsofAnyGroup,
   GetallRooms,
   GetBanHistory,
+  getUserProfile
 };
