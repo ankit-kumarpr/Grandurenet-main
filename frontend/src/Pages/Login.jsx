@@ -7,6 +7,7 @@ import axios from 'axios';
 import Slider1 from '../images/slider-1.jpg';
 import Slider2 from '../images/slider-2.jpg';
 import Slider3 from '../images/slider-3.jpg';
+import infunLogo from '../images/infun.png';
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -108,6 +109,14 @@ const Login = () => {
       <div className="container-fluid p-0">
         <div className="row g-0 main-wrapper">
           <div className="col-lg-6 right-section">
+              <div className="position-absolute top-0 start-0 m-3">
+    <img 
+      src={infunLogo} 
+      alt="Infun Logo" 
+      style={{ height: "60px", width: "auto" }} 
+      className="img-fluid"
+    />
+  </div>
             <div className="form-container">
               <h1 className="get-started-title">Get Started</h1>
               <p className="subtitle">
