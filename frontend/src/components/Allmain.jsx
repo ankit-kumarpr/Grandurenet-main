@@ -39,7 +39,7 @@ const Allmain = () => {
   const [pageTitle, setPageTitle] = useState("");
 const [loginuserRole, setUserRole] = useState("User");
   
-
+const navigate = useNavigate();
 const handleLogout = () => {
 
   sessionStorage.removeItem('accessToken'); 
