@@ -78,21 +78,21 @@ const Profile = () => {
         </div>
 
         <div className="stats-section">
-          <div className="stat-item">
-            <span className="stat-value">{profile.groups.length}</span>
-            <span className="stat-label">Groups</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">{profile.banHistory.length}</span>
-            <span className="stat-label">Bans</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">
-              {new Date(profile.createdAt).toLocaleDateString()}
-            </span>
-            <span className="stat-label">Joined</span>
-          </div>
-        </div>
+  <div className="stat-item">
+    <span className="stat-value">{profile.groups?.length || 0}</span>
+    <span className="stat-label">Groups</span>
+  </div>
+  <div className="stat-item">
+    <span className="stat-value">{profile.banHistory?.length || 0}</span>
+    <span className="stat-label">Bans</span>
+  </div>
+  <div className="stat-item">
+    <span className="stat-value">
+      {new Date(profile.createdAt).toLocaleDateString()}
+    </span>
+    <span className="stat-label">Joined</span>
+  </div>
+</div>
       </div>
     </div>
   );
