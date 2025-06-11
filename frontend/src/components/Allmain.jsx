@@ -222,38 +222,7 @@ const handleLogout = () => {
           
         </Routes>
 
-      <footer
-  className="fixed-bottom bg-light border-top py-2"
-  style={{
-    position: 'fixed',
-    bottom: '0',
-    width: '100%',
-    zIndex: 1000,
-  }}
->
-  <div className="container-fluid">
-    <div className="row text-center">
-      <div className="col">
-        <Link to="/all-group" className="btn text-dark">
-          <img src={RoomIcon} alt="Room" style={{ width: '24px', height: '24px' }} />
-          <div style={{ fontSize: '12px' }}>Room</div>
-        </Link>
-      </div>
-      <div className="col">
-        <Link to="/messages" className="btn text-dark">
-          <img src={messageIcon} alt="Message" style={{ width: '24px', height: '24px' }} />
-          <div style={{ fontSize: '12px' }}>Message</div>
-        </Link>
-      </div>
-      <div className="col">
-        <Link to="/profile" className="btn text-dark">
-          <img src={UserIcon} alt="Me" style={{ width: '24px', height: '24px' }} />
-          <div style={{ fontSize: '12px' }}>Me</div>
-        </Link>
-      </div>
-    </div>
-  </div>
-</footer>
+    
 
 
 {renderFooter()}
